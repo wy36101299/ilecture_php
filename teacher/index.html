@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0"/>
+	<title>iLecture - Teacher</title>
+	<link rel="stylesheet" href="../lib/style/reset.css">
+	<link rel="stylesheet" href="../lib/style/semantic.min.css">
+	<link rel="stylesheet" href="./style/index.css">
+	<link rel="stylesheet" href="./style/box.css">
+	<link rel="stylesheet" href="./style/message.css">
+	<script src="https://cdn.firebase.com/js/client/1.0.15/firebase.js"></script>
+	<script src="../lib/js/get-type.params.min.js"></script>
+	<script src="./js/db.js"></script>
+	<script>
+		(function(_GET, tInfo){
+		console.log(_GET);
+			var o_tInfo = JSON.parse(tInfo);
+			if( o_tInfo === null || o_tInfo.roomId !== _GET['room_id'] || o_tInfo.roomCode !== _GET['code'] ){  // 重新建立 Teacher 資訊
+				o_tInfo = {};
+				o_tInfo.roomId = _GET['room_id'];
+				o_tInfo.roomCode = _GET['code'];
+				o_tInfo.online_s = 0;
+				localStorage.setItem('tInfo', JSON.stringify(o_tInfo));
+			}
+			// localStorage 有值，且跟 GET 參數相符合，則不用重新建立 Teacher 資訊
+			checkAuth(o_tInfo, _GET['auth']);
+		})(getUrlVars(), localStorage.tInfo || 'null');
+	</script>
+</head>
+<body>
+	<header id="header">
+		<nav>
+			<div class="logo">iLecture</div>
+			<div class="action">
+				<div id="linkRoom_btn" class="ui icon button"><i class="url icon"></i></div>
+				<div id="question_btn" class="ui icon button"><i class="bullhorn icon"></i></div>
+				<div id="message_btn" class="ui icon button"><i class="comment icon"></i></div>
+			</div>
+		</nav>
+	</header>
+	<article id="container">
+		<section id="pieChart" style="float: left; width: 100%;margin-top: 30px;position: relative;">
+			<div>
+				<div class="chart" data-percent="100">
+					<div class="chart-content-wrapper">
+						<div class="chart-inner-wrapper">
+							<span _online="num" class="chart-number">0</span>
+						</div>
+					</div>
+				</div>
+				<p class="chart-title">在線人數</p>
+			</div>
+			<div>
+				<div class="chart" pieChart="speed" data-percent="0">
+					<div class="chart-content-wrapper">
+						<div class="chart-inner-wrapper">
+							<span class="chart-number"></span>
+						</div>
+					</div>
+				</div>
+				<p class="chart-title">上課速度</p>	
+			</div>
+			<div>
+				<div class="chart" pieChart="mood" data-percent="0">
+					<div class="chart-content-wrapper">
+						<div class="chart-inner-wrapper">
+							<span class="chart-number"></span>
+						</div>
+					</div>
+				</div>
+				<p class="chart-title">學生情況</p>
+			</div>
+		</section>
+	</article>
+	<article id="question-box">
+		<section>
+			<header>
+				<div class="title"><i class="back"></i><div>提出問題</div></div>
+				<div class="done"><i class="done"></i></div>
+			</header>
+			<article _que="0">
+				<div class="wrapper">
+					<div class="content">
+						<div class="ui form">
+							<div class="field">
+								<label>問題</label>
+								<input type="text" id="text-question">
+							</div>
+							<div class="grouped inline fields" style="margin: 0;">
+								<div class="field" style="display: inline-block;">
+									<div class="ui radio checkbox">
+										<input type="radio" name="type" id="checkbox-single" checked="checked">
+										<label _type="single">單選</label>
+									</div>
+								</div>
+								<div class="field" style="display: inline-block; margin-left: 0.5em;">
+									<div class="ui radio checkbox">
+										<input type="radio" name="type" id="checkbox-multiple">
+										<label _type="multiple">多選</label>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="ui top attached tabular menu">
+						<a class="active item" _tab="default">預設</a> 
+					</div>
+					<div id="sel-default" class="ui selection list" _type="single">
+						<div class="ui top attached  segment" _sel="2">
+							<p><span>2 selections</span><i class="angle right large icon"></i></p>
+						</div>
+						<div class="ui attached segment" _sel="3">
+							<p><span>3 selections</span><i class="angle right large icon"></i></p>
+						</div>
+						<div class="ui attached segment" _sel="4">
+							<p><span>4 selections</span><i class="angle right large icon"></i></p>
+						</div>
+						<div class="ui attached segment" _sel="5">
+							<p><span>5 selections</span><i class="angle right large icon"></i></p>
+						</div>
+						<div class="ui attached segment" _sel="6">
+							<p><span>6 selections</span><i class="angle right large icon"></i></p>
+						</div>
+						<div class="ui attached segment" _sel="7">
+							<p><span>7 selections</span><i class="angle right large icon"></i></p>
+						</div>
+						<div class="ui attached segment" _sel="8">
+							<p><span>8 selections</span><i class="angle right large icon"></i></p>
+						</div>
+						<div class="ui bottom attached segment" _sel="9">
+							<p><span>9 selections</span><i class="angle right large icon"></i></p>
+						</div>
+					</div>
+				</div>
+			</article>
+			<article _que="1" style="display: none;">
+				<div class="wrapper">
+					<div class="top">
+						<div class="bar"><canvas id="barCanvas"></canvas></div>
+					</div>
+					<div class="bottom">
+						<div class="ui labeled icon button prev">
+							<i class="left arrow icon"></i>重新提問
+						</div>
+					</div>
+				</div>
+			</article>
+		</section>
+	</article>
+	<article id="linkRoom-box" style="display: none;">
+		<section>
+			<header>
+				<div class="title"><i class="back"></i><div>連線資訊</div></div>
+			</header>
+			<article>
+				<div class="top-wrapper">
+					<div class="ui basic left aligned segment" style="padding: 15px;">
+						<div id="linkInfo" class="ui divided selection list">
+							<a class="item"><div class="ui red horizontal label">房間號碼</div><span></span></a>
+							<a class="item" target="_blank"><div class="ui purple horizontal label">連線網址</div><span></span></a>
+						</div>
+					</div>
+				</div>
+				<div class="left-wrapper">
+					<div id="show-qrCode" style="display: inline-block;"></div>
+				</div>
+				<div class="right-wrapper">
+					<div class="chart" data-percent="100">
+						<div class="chart-content-wrapper">
+							<div class="chart-inner-wrapper">
+								<span _online="num" class="chart-number">0</span>
+							</div>
+						</div>
+					</div>
+					<p class="chart-title">在線人數</p>
+				</div>
+			</article>
+		</section>
+	</article>
+	<div id="sidebar-message" class="ui right sidebar">
+		<div class="overlay"></div>
+		<section>
+			<div id="message">
+				<div>
+					<!-- Messages's Logs -->
+				</div>    
+			</div>
+		</section>
+		<footer>
+			<div class="ui fluid icon input">
+				<input type="text" placeholder="回覆..." style="border-radius: 0;">
+				<div id="text" class="ui icon button"><i class="bullhorn icon"></i></div>
+			</div>
+		</footer>
+	</div>
+	<script src="../lib/js/jquery-2.1.1.min.js"></script>
+	<script src="../lib/js/jquery.address.js"></script>
+	<script src="../lib/js/semantic.min.js"></script>
+	<script src="../lib/js/qrCode.min.js"></script>
+	<script src="../lib/js/jquery.easypiechart.min.js"></script>
+	<script src="../lib/js/jquery.urlshortener.min.js"></script>
+	<script src="../lib/js/timestamp.min.js"></script>
+	<script src="../lib/js/viewport.min.js"></script>
+	<script src="../lib/js/Chart.min.js"></script>
+	<script src="./js/index.js"></script>
+</body>
+</html>
