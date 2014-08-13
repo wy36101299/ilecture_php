@@ -32,17 +32,17 @@ $.ajax({
       }
 });
 $(document).on('click', '#create-room', function(){
-	var roomId = 'room_' + timestamp.get().num, code = $.password(4), authNumber = RandomNumber(10);
+	var roomId = 'room_' + timestamp.get().num, roomCode = $.password(4), authNumber = RandomNumber(10);
 	$.ajax({  
 		url: './php/index.php',
-		data:{'action': 'creatroom','roomId':roomId,'code':code,'authNumber':authNumber},
+		data:{'action': 'creatroom','roomId':roomId,'roomCode':roomCode,'authNumber':authNumber},
 		type: 'POST',
 		dataType: 'html',
 		success: function(msg){
 			console.log(msg);
 			msg = msg.split('@@');
-			var code = msg[1];
-			window.location.href = './teacher/index.html?r='+roomId+'&c='+code+'&auth='+authNumber;
+			var roomCode = msg[1];
+			window.location.href = './teacher/index.html?room_id='+roomId+'&code='+roomCode+'&auth='+authNumber;
 		},
 		error:function(xhr, ajaxOptions, thrownError){ 
 			console.log(xhr.status); 

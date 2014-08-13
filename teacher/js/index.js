@@ -7,7 +7,7 @@ $(function(){
 
 	// 初始化 Semantic UI Checkbox
 	$('#question-box div.ui.checkbox').checkbox();
-	
+
 	// 初始化 EasyPieChart
 	initPieChart(getUrlVars()['room_id']);
 	

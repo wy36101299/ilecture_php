@@ -1,19 +1,19 @@
 <?php
 include('db.php');
-	switch ($_POST['action']) {
-		case 'getary_roomId':
-			$ary_roomId = [];
-			$query = sprintf( "SELECT key1 FROM `rooms`" );
-			$result = mysql_query($query) or die('error@取得ary_roomId錯誤。');
-			if( mysql_num_rows( $result ) > 0 ){    // 有資料
-				while( $a = mysql_fetch_array($result) ){
-					array_push($ary_roomId,$a['key1']);
-				}
+switch ($_POST['action']) {
+	case 'getary_roomId':
+		$ary_roomId = [];
+		$query = sprintf( "SELECT key1 FROM `rooms`" );
+		$result = mysql_query($query) or die('error@取得ary_roomId錯誤。');
+		if( mysql_num_rows( $result ) > 0 ){    // 有資料
+			while( $a = mysql_fetch_array($result) ){
+				array_push($ary_roomId,$a['key1']);
 			}
-			echo 'success@@'.json_encode( (object)$ary_roomId );
-			break;
+		}
+		echo 'success@@'.json_encode( (object)$ary_roomId );
+		break;
 
-		case 'clear3daydata':
+	case 'clear3daydata':
 		$roomsId = $_POST['roomId'];
 		//取得$ary_codes
 		$query = sprintf( "SELECT value FROM `codes` WHERE key1 = 'array'" );
@@ -45,9 +45,9 @@ include('db.php');
 		}
 			break;
 
-		case 'creatroom':
+	case 'creatroom':
 		$roomId = $_POST['roomId'];
-		$code = $_POST['code'];
+		$roomCode = $_POST['roomCode'];
 		$authNumber = $_POST['authNumber'];
 		//取得$ary_codes
 		$query = sprintf( "SELECT value FROM `codes` WHERE key1 = 'array'" );
@@ -58,16 +58,16 @@ include('db.php');
 			}
 		}
 		if ($ary_codes == null){
-			$ary_codes = array($code);
+			$ary_codes = array($roomCode);
 		}else{
-			while( in_array($code,$ary_codes) == true ){
+			while( in_array($roomCode,$ary_codes) == true ){
 				$a = rand(0,9);
 				$b = rand(0,9);
 				$c = rand(0,9);
 				$d = rand(0,9);
-				$code = $a.$b.$c.$d;
+				$roomCode = $a.$b.$c.$d;
 			}
-			array_push($ary_codes,$code);
+			array_push($ary_codes,$roomCode);
 		}
 		//更新新房間密碼
 		$ary_codes = serialize($ary_codes);
@@ -78,7 +78,7 @@ include('db.php');
 			die($message);
 		}
 		//建立新房間資訊
-		$a=array("code"=>$code,"auth"=>$authNumber,"mood"=>"0_0","speed"=>"0_0","messages"=>serialize(array()),"question"=>null,"online_s"=>serialize(array()));
+		$a=array("roomCode"=>$roomCode,"auth"=>$authNumber,"mood"=>"0_0","speed"=>"0_0","messages"=>serialize(array()),"question"=>null,"online_s"=>serialize(array()));
 		$value=serialize($a);
 		$query = sprintf( "INSERT INTO `rooms` (key1, value) VALUES ('%s', '%s')", mysql_real_escape_string($roomId), mysql_real_escape_string($value) );
 		$result = mysql_query($query);
@@ -86,7 +86,7 @@ include('db.php');
 			$message  = 'error@創建新房間資訊失敗。';
 			die($message);
 		}
-		echo 'success@@'.$code;
+		echo 'success@@'.$roomCode;
 			break;
 	}
 
