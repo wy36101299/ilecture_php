@@ -2,7 +2,7 @@
 include('db.php');
 switch ($_POST['action']) {
 	case 'getary_roomId':
-		$ary_roomId = [];
+		$ary_roomId = array();
 		$query = sprintf( "SELECT key1 FROM `rooms`" );
 		$result = mysql_query($query) or die('error@取得ary_roomId錯誤。');
 		if( mysql_num_rows( $result ) > 0 ){    // 有資料

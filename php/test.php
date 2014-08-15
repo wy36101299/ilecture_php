@@ -24,10 +24,5 @@
 	// // }
 	// $key1 = 'room_1407150155501';
 	// $value = serialize($a);
-	$query = sprintf( "INSERT INTO `codes` (key1) VALUES ('%s')", mysql_real_escape_string('array'));
-	$result = mysql_query($query);
-	if( !$result ){
-		$message  = 'error@伺服器設定失敗。';
-		die($message);
-	}
+	echo "string";
 ?>
