@@ -87,13 +87,13 @@
 function sendMood(e, sInfo){
 	$.ajax({  
 		url: '../php/student_db.php',
-		data:{'action': 'sendMood','roomId':sInfo['roomId']},
+		data:{'action': 'getmessages','roomId':sInfo['roomId']},
 		type: 'POST',
 		dataType: 'html',
 		success: function(msg){
 			console.log(msg);
 			msg = msg.split('@@');
-			var ary = JSON.parse( msg[1] ) || null, o_send = {}, count = -1, time = timestamp.get().read, oldScores = 0, nowScores = parseInt($(e).attr('_mood')), newTimes = 1;
+			var ary = JSON.parse( msg[1] ).messages || null, o_send = {}, count = -1, time = timestamp.get().read, oldScores = 0, nowScores = parseInt($(e).attr('_mood')), newTimes = 1;
 			o_send[sInfo['sId']] = 'mood_'+time+'_'+nowScores;
 			if( ary !== null ){
 				for( var i=0, aryLen = ary.length; i<aryLen; i++ ){
@@ -119,10 +119,9 @@ function sendMood(e, sInfo){
 				ary = [];
 				ary.push(o_send);
 			}
-			console.log( ary );
 			$.ajax({  
 				url: '../php/student_db.php',
-				data:{'action': 'getmessages','roomId':sInfo['roomId'],'messages':ary},
+				data:{'action': 'setmessages','roomId':sInfo['roomId'],'messages':ary},
 				type: 'POST',
 				dataType: 'html',
 				success: function(msg){
@@ -141,12 +140,17 @@ function sendMood(e, sInfo){
 				dataType: 'html',
 				success: function(msg){
 					console.log(msg);
+					msg = msg.split('@@');
 					addMessage('Mood', e, nowScores, time, sInfo['sId']);
-					var scores = parseInt(msg[1].split('_')[0]) - oldScores + nowScores, times = parseInt(msg[1].split('_')[1]) + newTimes;
+					var scores = parseInt(JSON.parse( msg[1] ).mood.split('_')[0]) - oldScores + nowScores, times = parseInt(msg[1].split('_')[1]) + newTimes;
+					console.log(scores);
+					console.log('123');
+
+					console.log(times);
 					scores = scores+'_'+times;
 					$.ajax({  
 						url: '../php/student_db.php',
-						data:{'action': 'updateMood','roomId':sInfo['roomId'],'score':score},
+						data:{'action': 'updateMood','roomId':sInfo['roomId'],'score':scores},
 						type: 'POST',
 						dataType: 'html',
 						success: function(msg){
@@ -231,22 +235,33 @@ function sendMood(e, sInfo){
 // 	});
 // }
 
-// // 取得 Message's logs
-// function getLog(sInfo){
-// 	var messagesRef = myRootRef.child('rooms').child(sInfo['roomId']).child('messages');
-// 	messagesRef.once('value', function( data ){
-// 		var ary = JSON.parse(data.val()) || null, sLog = [];
-// 		if( ary !== null ){
-// 			for( var i=0, aryLen = ary.length; i<aryLen; i++ ){
-// 				if( sInfo['sId'] in ary[i] || 'teacher' in ary[i] ){
-// 					sLog.unshift(ary[i]);
-// 				}
-// 			}
-// 		}
-// 		console.log(sLog);
-// 		$(function(){ showLogs(sLog, sInfo); });
-// 	});
-// }
+// 取得 Message's logs
+function getLog(sInfo){
+	$.ajax({  
+		url: '../php/student_db.php',
+		data:{'action': 'getmessages','roomId':sInfo['roomId']},
+		type: 'POST',
+		dataType: 'html',
+		success: function(msg){
+			console.log(msg);
+			msg = msg.split('@@');
+			var ary = JSON.parse(msg[1]) || null, sLog = [];
+			if( ary !== null ){
+				for( var i=0, aryLen = ary.length; i<aryLen; i++ ){
+					if( sInfo['sId'] in ary[i] || 'teacher' in ary[i] ){
+						sLog.unshift(ary[i]);
+					}
+				}
+			}
+			console.log(sLog);
+			$(function(){ showLogs(sLog, sInfo); });
+		},
+		error:function(xhr, ajaxOptions, thrownError){ 
+			console.log(xhr.status); 
+			console.log(thrownError);
+		}
+	});	
+}
 
 // // 提交 答案
 // function sentAnswer(answerAry, sInfo){

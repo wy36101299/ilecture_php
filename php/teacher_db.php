@@ -12,7 +12,6 @@ switch ($_POST['action']) {
 		}
 		echo 'success@@'.$ary['auth'];
 		break;
-		
 	case 'initPieChart':
 		$roomId = $_POST['roomId'];
 		$query = sprintf( "SELECT value FROM `rooms` WHERE key1 = '$roomId'" );
