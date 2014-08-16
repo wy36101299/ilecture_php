@@ -87,13 +87,13 @@
 function sendMood(e, sInfo){
 	$.ajax({  
 		url: '../php/student_db.php',
-		data:{'action': 'getmessages','roomId':sInfo['roomId']},
+		data:{'action': 'getroomvalue','roomId':sInfo['roomId']},
 		type: 'POST',
 		dataType: 'html',
 		success: function(msg){
 			console.log(msg);
 			msg = msg.split('@@');
-			var ary = JSON.parse( msg[1] ).messages || null, o_send = {}, count = -1, time = timestamp.get().read, oldScores = 0, nowScores = parseInt($(e).attr('_mood')), newTimes = 1;
+			var ary = JSON.parse(JSON.parse( msg[1] ).messages) || null, o_send = {}, count = -1, time = timestamp.get().read, oldScores = 0, nowScores = parseInt($(e).attr('_mood')), newTimes = 1;
 			o_send[sInfo['sId']] = 'mood_'+time+'_'+nowScores;
 			if( ary !== null ){
 				for( var i=0, aryLen = ary.length; i<aryLen; i++ ){
@@ -121,7 +121,7 @@ function sendMood(e, sInfo){
 			}
 			$.ajax({  
 				url: '../php/student_db.php',
-				data:{'action': 'setmessages','roomId':sInfo['roomId'],'messages':ary},
+				data:{'action': 'setmessages','roomId':sInfo['roomId'],'messages':JSON.stringify(ary)},
 				type: 'POST',
 				dataType: 'html',
 				success: function(msg){
@@ -135,18 +135,13 @@ function sendMood(e, sInfo){
 			});	
 			$.ajax({  
 				url: '../php/student_db.php',
-				data:{'action': 'sendMood','roomId':sInfo['roomId'],'messages':ary},
+				data:{'action': 'getroomvalue','roomId':sInfo['roomId']},
 				type: 'POST',
 				dataType: 'html',
 				success: function(msg){
 					console.log(msg);
 					msg = msg.split('@@');
-					addMessage('Mood', e, nowScores, time, sInfo['sId']);
 					var scores = parseInt(JSON.parse( msg[1] ).mood.split('_')[0]) - oldScores + nowScores, times = parseInt(msg[1].split('_')[1]) + newTimes;
-					console.log(scores);
-					console.log('123');
-
-					console.log(times);
 					scores = scores+'_'+times;
 					$.ajax({  
 						url: '../php/student_db.php',
@@ -176,64 +171,136 @@ function sendMood(e, sInfo){
 	});	
 }
 
-// // 送出 Speed
-// function sendSpeed(e, sInfo){
-// 	var roomRef = myRootRef.child('rooms').child(sInfo['roomId']);
-// 	roomRef.child('messages').once('value', function(data1){
-// 		var ary = JSON.parse(data1.val()) || null, o_send = {}, count = -1, time = timestamp.get().read, oldScores = 0, nowScores = parseInt($(e).attr('_speed')), newTimes = 1;
-// 		o_send[sInfo['sId']] = 'speed_'+time+'_'+nowScores;
-// 		if( ary !== null ){
-// 			for( var i=0, aryLen = ary.length; i<aryLen; i++ ){
-// 				// 尋找是否已經有送出過 Speed ? 覆寫 : unshift，用 count 來判斷
-// 				if( sInfo['sId'] in ary[i] ){
-// 					console.log( ary[i][sInfo['sId']] );
-// 					if( ary[i][sInfo['sId']].split('_')[0] === 'speed' ){
-// 						oldScores = parseInt(ary[i][sInfo['sId']].split('_')[2]);
-// 						newTimes = 0;
-// 						for( var j=i; j>0; j-- ){
-// 							ary[j] = ary[j-1];
-// 						}
-// 						ary[0] = o_send;
-// 						count = 1;
-// 						break;
-// 					}
-// 				}
-// 			}
-// 			if( count < 0 ){
-// 				ary.unshift(o_send);
-// 			}
-// 		}else{
-// 			ary = [];
-// 			ary.push(o_send);
-// 		}
-// 		console.log(ary);
-// 		roomRef.child('messages').set(JSON.stringify(ary));
-// 		addMessage('Speed', e, nowScores, time, sInfo['sId']);
-// 		roomRef.child('speed').once('value', function(data2){
-// 			// scores : 學生的 scores 皆不重複，times : 全部學生發送 Speed 的次數
-// 			var scores = parseInt(data2.val().split('_')[0]) - oldScores + nowScores, times = parseInt(data2.val().split('_')[1]) + newTimes;
-// 			roomRef.child('speed').set(scores+'_'+times);
-// 		});
-// 	});
-// }
+// 送出 Speed
+function sendSpeed(e, sInfo){
+	$.ajax({  
+		url: '../php/student_db.php',
+		data:{'action': 'getroomvalue','roomId':sInfo['roomId']},
+		type: 'POST',
+		dataType: 'html',
+		success: function(msg){
+			console.log(msg);
+			msg = msg.split('@@');
+			var ary = JSON.parse(JSON.parse( msg[1] ).messages) || null, o_send = {}, count = -1, time = timestamp.get().read, oldScores = 0, nowScores = parseInt($(e).attr('_speed')), newTimes = 1;
+			o_send[sInfo['sId']] = 'speed_'+time+'_'+nowScores;
+			if( ary !== null ){
+				for( var i=0, aryLen = ary.length; i<aryLen; i++ ){
+					// 尋找是否已經有送出過 Speed ? 覆寫 : unshift，用 count 來判斷
+					if( sInfo['sId'] in ary[i] ){
+						console.log( ary[i][sInfo['sId']] );
+						if( ary[i][sInfo['sId']].split('_')[0] === 'speed' ){
+							oldScores = parseInt(ary[i][sInfo['sId']].split('_')[2]);
+							newTimes = 0;
+							for( var j=i; j>0; j-- ){
+								ary[j] = ary[j-1];
+							}
+							ary[0] = o_send;
+							count = 1;
+							break;
+						}
+					}
+				}
+				if( count < 0 ){
+					ary.unshift(o_send);
+				}
+			}else{
+				ary = [];
+				ary.push(o_send);
+			}
+			$.ajax({  
+				url: '../php/student_db.php',
+				data:{'action': 'setmessages','roomId':sInfo['roomId'],'messages':JSON.stringify(ary)},
+				type: 'POST',
+				dataType: 'html',
+				success: function(msg){
+					console.log(msg);
+					addMessage('Speed', e, nowScores, time, sInfo['sId']);
+				},
+				error:function(xhr, ajaxOptions, thrownError){ 
+					console.log(xhr.status); 
+					console.log(thrownError);
+				}
+			});	
+			$.ajax({  
+				url: '../php/student_db.php',
+				data:{'action': 'getroomvalue','roomId':sInfo['roomId']},
+				type: 'POST',
+				dataType: 'html',
+				success: function(msg){
+					console.log(msg);
+					msg = msg.split('@@');
+					var scores = parseInt(JSON.parse( msg[1] ).speed.split('_')[0]) - oldScores + nowScores, times = parseInt(msg[1].split('_')[1]) + newTimes;
+					scores = scores+'_'+times;
+					$.ajax({  
+						url: '../php/student_db.php',
+						data:{'action': 'updateSpeed','roomId':sInfo['roomId'],'score':scores},
+						type: 'POST',
+						dataType: 'html',
+						success: function(msg){
+							console.log(msg);
+						},
+						error:function(xhr, ajaxOptions, thrownError){ 
+							console.log(xhr.status); 
+							console.log(thrownError);
+						}
+					});
 
-// // 送出 Text
-// function sendText(e, sInfo, text){
-// 	var messagesRef = myRootRef.child('rooms').child(sInfo['roomId']).child('messages');
-// 	messagesRef.once('value', function( data ){
-// 		var ary = JSON.parse(data.val()) || null, o_send = {}, time = timestamp.get().read;
-// 		o_send[sInfo['sId']] = 'text_'+time+'_'+text;
-// 		if( ary === null ){
-// 			ary = [];
-// 			ary.push(o_send);
-// 		}else{
-// 			ary.unshift(o_send);
-// 		}
-// 		console.log(ary);
-// 		messagesRef.set(JSON.stringify(ary));
-// 		addMessage('Text', e, text, time, sInfo['sId']);
-// 	});
-// }
+				},
+				error:function(xhr, ajaxOptions, thrownError){ 
+					console.log(xhr.status); 
+					console.log(thrownError);
+				}
+			});
+		},
+		error:function(xhr, ajaxOptions, thrownError){ 
+			console.log(xhr.status); 
+			console.log(thrownError);
+		}
+	});	
+}
+
+
+// 送出 Text
+function sendText(e, sInfo, text){
+	$.ajax({  
+		url: '../php/student_db.php',
+		data:{'action': 'getroomvalue','roomId':sInfo['roomId']},
+		type: 'POST',
+		dataType: 'html',
+		success: function(msg){
+			console.log(msg);
+			msg = msg.split('@@');
+
+			var ary = JSON.parse(JSON.parse( msg[1] ).messages) || null, o_send = {}, time = timestamp.get().read;
+			o_send[sInfo['sId']] = 'text_'+time+'_'+text;
+			if( ary === null ){
+				ary = [];
+				ary.push(o_send);
+			}else{
+				ary.unshift(o_send);
+			}
+			console.log(ary);
+			$.ajax({  
+				url: '../php/student_db.php',
+				data:{'action': 'setmessages','roomId':sInfo['roomId'],'messages':JSON.stringify(ary)},
+				type: 'POST',
+				dataType: 'html',
+				success: function(msg){
+					console.log(msg);
+					addMessage('Text', e, text, time, sInfo['sId']);
+				},
+				error:function(xhr, ajaxOptions, thrownError){ 
+					console.log(xhr.status); 
+					console.log(thrownError);
+				}
+			});	
+		},
+		error:function(xhr, ajaxOptions, thrownError){ 
+			console.log(xhr.status); 
+			console.log(thrownError);
+		}
+	});
+}
 
 // 取得 Message's logs
 function getLog(sInfo){
@@ -245,7 +312,7 @@ function getLog(sInfo){
 		success: function(msg){
 			console.log(msg);
 			msg = msg.split('@@');
-			var ary = JSON.parse(msg[1]) || null, sLog = [];
+			var ary = JSON.parse(JSON.parse( msg[1] ).messages) || null, sLog = [];
 			if( ary !== null ){
 				for( var i=0, aryLen = ary.length; i<aryLen; i++ ){
 					if( sInfo['sId'] in ary[i] || 'teacher' in ary[i] ){
