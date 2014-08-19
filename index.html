@@ -1,0 +1,51 @@
+<!DOCTYPE HTML> 
+<html lang="zh-TW">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0"/>
+	<title>iLecture</title>
+	<link rel="stylesheet" href="./lib/style/reset.css">
+	<link rel="stylesheet" href="./lib/style/idangerous.swiper.css">
+	<link rel="stylesheet" href="./index.css"/>
+</head>
+<body id="body" class="tw">
+	<article style="position: fixed; top: 0; left: 0; bottom: 60px; right: 0;">
+		<div id="swiper" class="swiper-container">
+			<div class="swiper-wrapper">
+				<div class="swiper-slide red-slide">
+					<div class="title">Slide 1</div>
+				</div>
+				<div class="swiper-slide blue-slide">
+					<div class="title">Slide 2</div>
+				</div>
+				<div class="swiper-slide orange-slide">
+					<div class="title">Slide 3</div>
+				</div>
+				<div class="swiper-slide green-slide">
+					<div class="title">Slide 4</div>
+				</div>
+				<div class="swiper-slide pink-slide">
+					<div class="title">Slide 5</div>
+				</div>
+			</div>
+			<div class="pagination"></div>
+		</div>
+	</article>
+	<article style="position: fixed; left: 0; bottom: 0px; right: 0; height: 60px;">
+		<input id="create-room" type="button" value="開教室">
+	</article>
+	<script src="https://cdn.firebase.com/js/client/1.0.15/firebase.js"></script>
+	<script src="./lib/js/jquery-2.1.1.min.js"></script>
+	<script src="./lib/js/jquery.password.js"></script>
+	<script src="./lib/js/timestamp.min.js"></script>
+	<script src="./lib/js/idangerous.swiper.min.js"></script>
+	<script src="./index.js"></script>
+	<script>
+		var mySwiper = new Swiper('#swiper',{
+			pagination: '.pagination',
+			paginationClickable: true,
+			
+		})
+	</script>
+</body>
+</html>

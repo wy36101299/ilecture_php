@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0"/>
+	<title>iLecture - Student</title>
+	<link rel="stylesheet" href="../lib/style/reset.css">
+	<link rel="stylesheet" href="../lib/style/semantic.min.css">
+	<link rel="stylesheet" href="../lib/style/idangerous.swiper.css">
+	<link rel="stylesheet" href="./style/index.css">
+	<link rel="stylesheet" href="./style/results.css">
+	<link rel="stylesheet" href="./style/vote.css">
+	<script src="https://cdn.firebase.com/js/client/1.0.15/firebase.js"></script>
+	<script src="../lib/js/get-type.params.min.js"></script>
+	<script src="../lib/js/timestamp.min.js"></script>
+	<script src="../lib/js/jquery-2.1.1.min.js"></script>
+	<script src="./js/db.js"></script>
+	<script>
+		(function( _GET, sInfo ){
+			var o_sInfo = JSON.parse( sInfo );
+			if( o_sInfo === null || o_sInfo.roomId !== _GET['room_id'] || o_sInfo.roomCode !== _GET['code'] ){  // 重新建立 Student 資訊
+				o_sInfo = {};
+				o_sInfo.sId = 's_'+randomInt(1, 100);
+				o_sInfo.roomId = _GET['room_id'];
+				o_sInfo.roomCode = _GET['code'];
+				o_sInfo.qAry = [];
+				o_sInfo.params = 'room_id='+_GET['room_id']+'&code='+_GET['code'];
+				localStorage.setItem('sInfo', JSON.stringify(o_sInfo));
+				setStudentId(o_sInfo);
+			}else{  // localStorage 有值，且跟 GET 參數相符合，則不用重新建立 Student 資訊 
+				// 抓歷史 Message;s Logs
+				getLog(o_sInfo);
+				// 開始監聽 FireBase上 該房間的資訊
+				setInterval(bindRoom(o_sInfo),1000); 
+				// 更新連線狀態
+				updateState(o_sInfo);
+			}
+		})(getUrlVars(), localStorage.sInfo || 'null');
+	</script>
+</head>
+<body>
+	<div id="posting-overlay"></div>
+	<header id="header">
+		<nav>
+			<div class="sId"></div>
+			<div id="results_btn"><i></i></div>
+		</nav>
+	</header>
+	<article id="container">
+		<section id="message">
+			<div>
+				<!-- Messages's Logs -->
+			</div>    
+		</section>
+	</article>
+	<article id="posting">
+		<div>
+			<section id="mood">
+				<div class="swiper-container swiper-nav">
+					<div class="swiper-wrapper">
+						<div class="swiper-slide" _mood="-3">
+							<img src="../image/mood_-3.png">
+							<div class="title">超級糟</div>
+						</div>
+						<div class="swiper-slide" _mood="-2">
+							<img src="../image/mood_-2.png">
+							<div class="title">非常糟</div>
+						</div>
+						<div class="swiper-slide" _mood="-1">
+							<img src="../image/mood_-1.png">
+							<div class="title">有點糟</div>
+						</div>
+						<div class="swiper-slide" _mood="0">
+							<img src="../image/mood_0.png">
+							<div class="title">還可以</div>
+						</div>
+						<div class="swiper-slide" _mood="1">
+							<img src="../image/mood_1.png">
+							<div class="title">有點好</div>
+						</div>
+						<div class="swiper-slide" _mood="2">
+							<img src="../image/mood_2.png">
+							<div class="title">非常好</div>
+						</div>
+						<div class="swiper-slide" _mood="3">
+							<img src="../image/mood_3.png">
+							<div class="title">超級好</div>
+						</div>
+					</div>
+				</div>
+			</section>
+			<section id="speed">
+				<div class="swiper-container swiper-nav">
+					<div class="swiper-wrapper">
+						<div class="swiper-slide" _speed="-3">
+							<img src="../image/speed_-3.png">
+							<div class="title">超級慢</div>
+						</div>
+						<div class="swiper-slide" _speed="-2">
+							<img src="../image/speed_-2.png">
+							<div class="title">非常慢</div>
+						</div>
+						<div class="swiper-slide" _speed="-1">
+							<img src="../image/speed_-1.png">
+							<div class="title">有點慢</div>
+						</div>
+						<div class="swiper-slide" _speed="0">
+							<img src="../image/speed_0.png">
+							<div class="title">還可以</div>
+						</div>
+						<div class="swiper-slide" _speed="1">
+							<img src="../image/speed_1.png">
+							<div class="title">有點快</div>
+						</div>
+						<div class="swiper-slide" _speed="2">
+							<img src="../image/speed_2.png">
+							<div class="title">非常快</div>
+						</div>
+						<div class="swiper-slide" _speed="3">
+							<img src="../image/speed_3.png">
+							<div class="title">超級快</div>
+						</div>
+					</div>
+				</div>
+			</section>
+		</div>
+	</article>
+	<footer id="footer" >
+		<div class="ui fluid icon input">
+			<input type="text" placeholder="發問..." style="padding-left: 42px; border-radius: 0;">
+			<div id="posting_btn" class="actived"><i class="large black smile icon"></i></div>
+			<div id="text"class="ui icon button"><i class="bullhorn icon"></i></div>
+		</div>			
+	</footer>
+	<article id="results-box">
+		<section>
+			<header>
+				<div class="title"><i class="back"></i><div>Results</div></div>
+			</header>
+			<article>
+				<div style="margin: 10px;">
+					<div class="ui segment">
+						<div class="ui top attached label">最新問題的結果</div>
+						<div class="bar"><canvas id="barCanvas"></canvas></div>
+					</div>
+				</div>
+			</article>
+		</section>
+	</article>
+	<article id="vote-box">
+		<section>
+			<header>
+				<div class="title">單選</div>
+				<div class="done"><i class="done"></i></div>
+			</header>
+			<article>
+				<div class="ui segment" style="margin: 10px;">
+					<p id="question">注意老師的問題</p>
+					<div class="ui basic segment">
+						<div id="sel-vote" class="ui large black labels">
+							<!-- 問題選項 -->
+						</div>
+					</div>
+				</div>
+			</article>
+		</section>
+	</article>
+	<!-- <script src="../lib/js/jquery-2.1.1.min.js"></script> -->
+	<script src="../lib/js/jquery.address.js"></script>
+	<script src="../lib/js/semantic.min.js"></script>
+	<script src="../lib/js/idangerous.swiper.min.js"></script>
+	<script src="../lib/js/viewport.min.js"></script>
+	<script src="../lib/js/Chart.min.js"></script>
+	<script src="./js/index.js"></script>
+</body>
+</html>
