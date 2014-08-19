@@ -54,34 +54,58 @@
 // 	}
 // }
 
-// // 更新連線狀態
-// function updateState(sInfo){
-// 	var online_sRef = myRootRef.child('rooms').child(sInfo['roomId']).child('online_s');
-// 	online_sRef.once('value', function(data){
-// 		var ary = JSON.parse(data.val()) || null, o_state = {}, count = -1;
-// 		o_state[sInfo['sId']] = timestamp.get().num;
-// 		if( ary !== null ){
-// 			for( var i=0, aryLen = ary.length; i<aryLen; i++ ){
-// 				// 尋找是否有就得連線狀態 ? 更新並覆寫 : push，用 count 來判斷
-// 				if( sInfo['sId'] in ary[i] ){
-// 					ary[i] = o_state;
-// 					count = 1;
-// 					break;
-// 				}
-// 			}
-// 			if( count < 0 ){
-// 				ary.push(o_state);
-// 			}
-// 		}else{
-// 			ary = [];
-// 			ary.push(o_state);
-// 		}
-// 		console.log( ary );
-// 		online_sRef.set(JSON.stringify(ary));
-// 	});
-// 	// 每「10秒」更新一次
-// 	setTimeout(function(){ updateState(sInfo); }, 1*10*1000);
-// }
+// 更新連線狀態
+function updateState(sInfo){
+	$.ajax({  
+		url: '../php/student_db.php',
+		data:{'action': 'getroomvalue','roomId':sInfo['roomId']},
+		type: 'POST',
+		dataType: 'html',
+		success: function(msg){
+			console.log(msg);
+			msg = msg.split('@@');
+			var ary = JSON.parse(JSON.parse( msg[1] ).online_s) || null, o_state = {}, count = -1;
+			o_state[sInfo['sId']] = timestamp.get().num;
+			if( ary !== null ){
+				for( var i=0, aryLen = ary.length; i<aryLen; i++ ){
+					// 尋找是否有就得連線狀態 ? 更新並覆寫 : push，用 count 來判斷
+					if( sInfo['sId'] in ary[i] ){
+						ary[i] = o_state;
+						count = 1;
+						break;
+					}
+				}
+				if( count < 0 ){
+					ary.push(o_state);
+				}
+			}else{
+				ary = [];
+				ary.push(o_state);
+			}
+			console.log( ary );
+			$.ajax({  
+				url: '../php/student_db.php',
+				data:{'action': 'updateState','roomId':sInfo['roomId'],'online_s':JSON.stringify(ary)},
+				type: 'POST',
+				dataType: 'html',
+				success: function(msg){
+					console.log(msg);
+					// 每「10秒」更新一次
+					setTimeout(function(){ updateState(sInfo); }, 1*1*1000);
+					console,log('update');
+				},
+				error:function(xhr, ajaxOptions, thrownError){ 
+					console.log(xhr.status); 
+					console.log(thrownError);
+				}
+			});
+		},
+		error:function(xhr, ajaxOptions, thrownError){ 
+			console.log(xhr.status); 
+			console.log(thrownError);
+		}
+	});	
+}
 
 // 送出 Mood
 function sendMood(e, sInfo){
@@ -270,7 +294,6 @@ function sendText(e, sInfo, text){
 		success: function(msg){
 			console.log(msg);
 			msg = msg.split('@@');
-
 			var ary = JSON.parse(JSON.parse( msg[1] ).messages) || null, o_send = {}, time = timestamp.get().read;
 			o_send[sInfo['sId']] = 'text_'+time+'_'+text;
 			if( ary === null ){
@@ -306,7 +329,7 @@ function sendText(e, sInfo, text){
 function getLog(sInfo){
 	$.ajax({  
 		url: '../php/student_db.php',
-		data:{'action': 'getmessages','roomId':sInfo['roomId']},
+		data:{'action': 'getroomvalue','roomId':sInfo['roomId']},
 		type: 'POST',
 		dataType: 'html',
 		success: function(msg){
@@ -330,17 +353,38 @@ function getLog(sInfo){
 	});	
 }
 
-// // 提交 答案
-// function sentAnswer(answerAry, sInfo){
-// 	var questionRef = myRootRef.child('rooms').child(sInfo['roomId']).child(sInfo.qAry.shift());
-// 	questionRef.once('value', function(data){ console.log(data.val());
-// 		var o_ques = JSON.parse(data.val()), o_answer = {};
-// 		for( var i=0, iLen=answerAry.length; i<iLen; i++ ){
-// 			o_ques.answer.push(answerAry[i]);
-// 		}
-// 		o_ques.count++;
-// 		console.log(o_ques);
-// 		questionRef.set(JSON.stringify(o_ques));
-// 		closeVote();
-// 	});
-// }
+// 提交 答案
+function sentAnswer(answerAry, sInfo){
+	$.ajax({  
+		url: '../php/student_db.php',
+		data:{'action': 'getroomvalue','roomId':sInfo['roomId']},
+		type: 'POST',
+		dataType: 'html',
+		success: function(msg){
+		var o_ques = JSON.parse(JSON.parse( msg[1] ).messages), o_answer = {};
+				for( var i=0, iLen=answerAry.length; i<iLen; i++ ){
+					o_ques.answer.push(answerAry[i]);
+				}
+				o_ques.count++;
+				console.log(o_ques);
+			$.ajax({  
+				url: '../php/student_db.php',
+				data:{'action': 'sentAnswer','roomId':sInfo['roomId'],'qId':sInfo.qAry.shift(),'answer':JSON.stringify(o_ques)},
+				type: 'POST',
+				dataType: 'html',
+				success: function(msg){
+					console.log(msg);
+					closeVote();
+				},
+				error:function(xhr, ajaxOptions, thrownError){ 
+					console.log(xhr.status); 
+					console.log(thrownError);
+				}
+			});	
+		},
+		error:function(xhr, ajaxOptions, thrownError){ 
+			console.log(xhr.status); 
+			console.log(thrownError);
+		}
+	});
+}

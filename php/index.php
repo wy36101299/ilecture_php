@@ -76,7 +76,7 @@ switch ($_POST['action']) {
 			die($message);
 		}
 		//建立新房間資訊
-		$a=array("roomCode"=>$roomCode,"auth"=>$authNumber,"mood"=>"0_0","speed"=>"0_0","messages"=>null,"question"=>null,"online_s"=>array());
+		$a=array("roomCode"=>$roomCode,"auth"=>$authNumber,"mood"=>"0_0","speed"=>"0_0","messages"=>null,"question"=>null,"online_s"=>null);
 		$value=serialize($a);
 		$query = sprintf( "INSERT INTO `rooms` (key1, value) VALUES ('%s', '%s')", mysql_real_escape_string($roomId), mysql_real_escape_string($value) );
 		$result = mysql_query($query);

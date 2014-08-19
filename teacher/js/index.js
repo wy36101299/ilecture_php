@@ -164,7 +164,7 @@ function setPieChartPos($pieChart, _){
 		}
 	}
 }
-		
+
 // Messages : 顯示資訊(剛載入網頁時)
 function showLogs(tLog, tInfo){
 	var html = '';
