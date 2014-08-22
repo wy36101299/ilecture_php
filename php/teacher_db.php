@@ -72,5 +72,42 @@ switch ($_POST['action']) {
 		}
 		break;
 
+	case 'tea_bindRoom':
+		$roomId = $_POST['roomId'];
+
+		$query = sprintf( "SELECT value,ini_value FROM `rooms` WHERE key1 = '$roomId'" );
+		$result = mysql_query($query) or die('error@取得房間value失敗。');
+		if( mysql_num_rows( $result ) > 0 ){    // 有資料
+			while( $a = mysql_fetch_array($result) ){
+				$up_value = unserialize($a['value']);
+				$ini_value = unserialize($a['ini_value']);
+			}
+		}
+		if ($ini_value !== $up_value) {
+			// 刷新 ini_value
+			$query = sprintf( "UPDATE `rooms` SET ini_value = '$up_value' WHERE key1 = '$roomId'" );
+			$result = mysql_query($query);
+			if( !$result ){
+				$message  = 'error@刷新ini_value失敗。';
+				die($message);
+			}
+			// Key 更新 : Mood
+			if ( $ini_ary['mood'] !== $up_value['mood'] ) {
+				echo "mood@@".json_encode( (object)$ary );
+			}
+			// Key 更新 : Speed
+			if ( $ini_ary['speed'] !== $up_value['speed'] ) {
+				echo "speed@@".json_encode( (object)$ary );
+			}
+			// Key 更新 : Messages
+			if ( $ini_ary['messages'] !== $up_value['messages'] ) {
+				echo "messages@@".json_encode( (object)$ary );
+			}
+			// Key 更新 : online_s
+			if ( $ini_ary['online_s'] !== $up_value['online_s'] ) {
+				echo "online_s@@".json_encode( (object)$ary );
+			}
+		}
+		break;
 	}
 ?>

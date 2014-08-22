@@ -120,17 +120,33 @@ switch ($_POST['action']) {
 		}
 		break;
 		
-	case 'bindRoom':
-		$ary_roomId = array();
-		$query = sprintf( "SELECT key1 FROM `rooms`" );
-		$result = mysql_query($query) or die('error@取得ary_roomId錯誤。');
+	case 'st_bindRoom':
+		$roomId = $_POST['roomId'];
+
+		$query = sprintf( "SELECT value,ini_value FROM `rooms` WHERE key1 = '$roomId'" );
+		$result = mysql_query($query) or die('error@取得房間value失敗。');
 		if( mysql_num_rows( $result ) > 0 ){    // 有資料
 			while( $a = mysql_fetch_array($result) ){
-				array_push($ary_roomId,$a['key1']);
+				$up_value = unserialize($a['value']);
+				$ini_value = unserialize($a['ini_value']);
 			}
 		}
-		echo 'success@@'.json_encode( (object)$ary_roomId );
+		if ($ini_value !== $up_value) {
+			// 刷新 ini_value
+			$query = sprintf( "UPDATE `rooms` SET ini_value = '$up_value' WHERE key1 = '$roomId'" );
+			$result = mysql_query($query);
+			if( !$result ){
+				$message  = 'error@刷新ini_value失敗。';
+				die($message);
+			}
+			// Teacher 有提出問題
+			if ( $ini_ary['question'] !== $up_value['question'] ) {
+				echo "question@@".json_encode( (object)$ary );
+			}
+			// Key 更新 : Messages
+			if ( $ini_ary['messages'] !== $up_value['messages'] ) {
+				echo "messages@@".json_encode( (object)$ary );
+			}
+		}
 		break;
-	}
-
 ?>

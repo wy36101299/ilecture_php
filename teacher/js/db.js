@@ -27,49 +27,58 @@ function checkAuth(tInfo, auth){
 	});	
 }
 
-// // 開始監聽 FireBase上 該房間的資訊
-// function bindRoom(tInfo){
-// 	var roomRef = myRootRef.child('rooms').child(tInfo['roomId']);
-// 	roomRef.on('child_changed', function(snapshot, prevChildName){
-// 		console.log(snapshot.name());
-// 		if( snapshot.name() === 'mood' ){  // Key 更新 : Mood
-// 			setMoodInfo( $('#pieChart'), snapshot.val() );
-// 		}else if( snapshot.name() === 'speed' ){  // Key 更新 : Speed
-// 			setSpeedInfo( $('#pieChart'), snapshot.val() );
-// 		}else if( snapshot.name() === 'messages' ){  // Key 更新 : Messages
-// 			addMessages( tInfo, JSON.parse( snapshot.val() ) );
-// 		}else if( snapshot.name().indexOf('_') === 1 ){  // Key 更新 : 某個 Question
-// 			var tInfo = JSON.parse(localStorage.tInfo), qId = tInfo.qAry.shift();
-// 			if( snapshot.name() === qId ){  // 取得投票的結果
-// 				console.log(snapshot.val());
-// 				var o_ques = JSON.parse(snapshot.val()), answerAry = o_ques.answer.sort(), resultAry = [], current = null, count = 0;
-// 				for( var i=0, iLen=o_ques.num; i<=iLen; i++ ){
-// 					resultAry[i] = 0;
-// 				}
-// 				for( var i=0, iLen=answerAry.length; i<iLen; i++ ){
-// 					if( answerAry[i] != current ){
-// 						if( count > 0 ){
-// 							resultAry[current] = count;
-// 						}
-// 						current = answerAry[i];
-// 						count = 1;
-// 					}else{
-// 						count++;
-// 					}
-// 				}
-// 				if( count > 0 ){
-// 					resultAry[current] = count;
-// 				}
-// 				console.log(answerAry);
-// 				console.log(resultAry);
-// 				// 顯示投票的結果
-// 				drawBarChart(resultAry);
-// 			}
-// 		}else if( snapshot.name() === 'online_s' ){  // Key 更新 : online_s
-// 			updateOnline_s();
-// 		}
-// 	});
-// }
+// 開始監聽 FireBase上 該房間的資訊
+function bindRoom(tInfo){
+	$.ajax({  
+		url: '../php/teacher_db.php',
+		data:{'action': 'tea_bindRoom','roomId':tInfo['roomId']},
+		type: 'POST',
+		dataType: 'html',
+		success: function(msg){
+			msg = msg.split('@@');
+			if( msg[0] === 'mood' ){  // Key 更新 : Mood
+				setMoodInfo( $('#pieChart'), JSON.parse( msg[1] ).mood );
+			}else if( msg[0] === 'speed' ){  // Key 更新 : Speed
+				setSpeedInfo( $('#pieChart'), JSON.parse( msg[1] ).speed );
+			}else if( msg[0] === 'messages' ){  // Key 更新 : Messages
+				addMessages( tInfo, JSON.parse( JSON.parse( msg[1] ).messages ) );
+			}else if( JSON.parse( msg[1] ).indexOf('_') === 1 ){  // Key 更新 : 某個 Question
+				var tInfo = JSON.parse(localStorage.tInfo), qId = tInfo.qAry.shift();
+				if( JSON.parse( msg[1] ) === qId ){  // 取得投票的結果
+					console.log(JSON.parse( msg[1] ).qId);
+					var o_ques = JSON.parse(JSON.parse( msg[1] ).qId), answerAry = o_ques.answer.sort(), resultAry = [], current = null, count = 0;
+					for( var i=0, iLen=o_ques.num; i<=iLen; i++ ){
+						resultAry[i] = 0;
+					}
+					for( var i=0, iLen=answerAry.length; i<iLen; i++ ){
+						if( answerAry[i] != current ){
+							if( count > 0 ){
+								resultAry[current] = count;
+							}
+							current = answerAry[i];
+							count = 1;
+						}else{
+							count++;
+						}
+					}
+					if( count > 0 ){
+						resultAry[current] = count;
+					}
+					console.log(answerAry);
+					console.log(resultAry);
+					// 顯示投票的結果
+					drawBarChart(resultAry);
+				}
+			}else if( msg[0] === 'online_s' ){  // Key 更新 : online_s
+				updateOnline_s();
+			}
+		},
+		error:function(xhr, ajaxOptions, thrownError){ 
+			console.log(xhr.status); 
+			console.log(thrownError);
+		}
+	});
+}
 
 // 更新 Student 連線者名單
 function updateOnline_s(){ console.log('Update : online_s !');
@@ -237,7 +246,7 @@ function createQuestion(e, tInfo){
 // 老師回覆 : 送出 Text
 function sendText(e, tInfo, text){
 	$.ajax({  
-		url: '../php/student_db.php',
+		url: '../php/index.php',
 		data:{'action': 'getroomvalue','roomId':tInfo['roomId']},
 		type: 'POST',
 		dataType: 'html',
@@ -260,7 +269,6 @@ function sendText(e, tInfo, text){
 				dataType: 'html',
 				success: function(msg){
 					console.log(msg);
-					addMessages(tInfo, tLog);
 					$(e).prev().val('');
 					$a.animate({scrollTop: $a.prop('scrollHeight')}, 500);
 				},
@@ -277,31 +285,42 @@ function sendText(e, tInfo, text){
 	});
 }
 
-// // 取得投票的結果
-// function getResult(tInfo){
-// 	var roomRef = myRootRef.child('rooms').child(tInfo['roomId']), qId = tInfo.qAry.shift();
-// 	roomRef.child(qId).once('value', function(data){
-// 		var o_ques = JSON.parse(data.val()), answerAry = o_ques.answer.sort(), resultAry = [], current = null, count = 0;
-// 		console.log( o_ques );
-// 		for( var i=0, iLen=o_ques.num; i<iLen; i++ ){
-// 			resultAry[i] = 0;
-// 		}
-// 		for( var i=0, iLen=answerAry.length; i<iLen; i++ ){
-// 			if( answerAry[i] != current ){
-// 				if( count > 0 ){
-// 					resultAry[current] = count;
-// 				}
-// 				current = answerAry[i];
-// 				count = 1;
-// 			}else{
-// 				count++;
-// 			}
-// 		}
-// 		if( count > 0 ){
-// 			resultAry[current] = count;
-// 		}
-// 		console.log( answerAry );
-// 		console.log( resultAry );
-// 		drawBarChart(resultAry);
-// 	});
-// }
+// 取得投票的結果
+function getResult(tInfo){
+	qId = tInfo.qAry.shift();
+	$.ajax({  
+		url: '../php/index.php',
+		data:{'action': 'getroomvalue','roomId':tInfo['roomId']},
+		type: 'POST',
+		dataType: 'html',
+		success: function(msg){
+			msg = msg.split('@@');
+			var o_ques = JSON.parse( JSON.parse( msg[1] ).qId ), answerAry = o_ques.answer.sort(), resultAry = [], current = null, count = 0;
+			console.log( o_ques );
+			for( var i=0, iLen=o_ques.num; i<iLen; i++ ){
+				resultAry[i] = 0;
+			}
+			for( var i=0, iLen=answerAry.length; i<iLen; i++ ){
+				if( answerAry[i] != current ){
+					if( count > 0 ){
+						resultAry[current] = count;
+					}
+					current = answerAry[i];
+					count = 1;
+				}else{
+					count++;
+				}
+			}
+			if( count > 0 ){
+				resultAry[current] = count;
+			}
+			console.log( answerAry );
+			console.log( resultAry );
+			drawBarChart(resultAry);
+		},
+		error:function(xhr, ajaxOptions, thrownError){ 
+			console.log(xhr.status); 
+			console.log(thrownError);
+		}
+	});	
+}

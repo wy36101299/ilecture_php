@@ -84,6 +84,22 @@ switch ($_POST['action']) {
 			$message  = 'error@創建新房間資訊失敗。';
 			die($message);
 		}
+
+		//初始化timestamp
+		$query = sprintf( "SELECT value FROM `rooms` WHERE key1 = '$roomId'" );
+		$result = mysql_query($query) or die('error@取得房間value失敗。');
+		if( mysql_num_rows( $result ) > 0 ){    // 有資料
+			while( $a = mysql_fetch_array($result) ){
+				$up_value = $a['value'];
+			}
+		}
+
+		$query = sprintf( "UPDATE `rooms` SET ini_value = '$up_value' WHERE key1 = '$roomId'" );
+		$result = mysql_query($query);
+		if( !$result ){
+			$message  = 'error@初始化ini_value失敗。';
+			die($message);
+		}
 		echo 'success@@'.$roomCode;
 			break;
 ////////////////////////////////////////////////////////////////

@@ -1,3 +1,4 @@
+showVote
 $(function(){
 	// 處理 Hash
 	setHash();

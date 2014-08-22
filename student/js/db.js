@@ -1,23 +1,69 @@
-// 開始監聽  該房間的資訊
+// 開始監聽 FireBase上 該房間的資訊
 function bindRoom(sInfo){
 	$.ajax({  
 		url: '../php/student_db.php',
-		data:{'action': 'bindRoom','roomId':sInfo['roomId']},
+		data:{'action': 'st_bindRoom','roomId':sInfo['roomId']},
 		type: 'POST',
 		dataType: 'html',
 		success: function(msg){
-			console.log(msg);
 			msg = msg.split('@@');
-			//Teacher 有提出問題
-			sInfo.qAry = [];
-			sInfo.qAry.unshift(JSON.parse( msg[1] ).question);
-			localStorage.setItem('sInfo', JSON.stringify(sInfo));
-			
-			var message = JSON.parse(JSON.parse( msg[1] ).messages);
-			if( message[0]['teacher'] ){
-				var $a = $('#container');
-				$a.children().children().append(getMessagesHtml('Text', message[0]['teacher'].substr(25), message[0]['teacher'].split('_')[1] , 'teacher'));
-				$a.animate({scrollTop: $a.prop('scrollHeight')}, 500);
+			if( msg[0] === 'question' ){ // Teacher 有提出問題
+				var qId = JSON.parse( msg[1] ).question;
+				sInfo.qAry = [];
+				sInfo.qAry.unshift(qId);
+				localStorage.setItem('sInfo', JSON.stringify(sInfo));
+				showVote(JSON.parse( JSON.parse( msg[1] ).qId) );
+			}else if( msg[0] === 'messages' ){  // Key 更新 : Messages
+				var message = JSON.parse(JSON.parse( msg[1] ).messages);
+				if( message[0]['teacher'] ){
+					var $a = $('#container');
+					$a.children().children().append(getMessagesHtml('Text', message[0]['teacher'].substr(25), message[0]['teacher'].split('_')[1] , 'teacher'));
+					$a.animate({scrollTop: $a.prop('scrollHeight')}, 500);
+				}
+			};
+		},
+		error:function(xhr, ajaxOptions, thrownError){ 
+			console.log(xhr.status); 
+			console.log(thrownError);
+		}
+	});
+}
+
+// 取得投票結果
+function getVoteResults(e, sInfo){
+	sId = sInfo.sId, qId = sInfo.qAry[0] || null;
+	$.ajax({  
+		url: '../php/index.php',
+		data:{'action': 'getroomvalue','roomId':sInfo['roomId']},
+		type: 'POST',
+		dataType: 'html',
+		success: function(msg){
+			msg = msg.split('@@');
+			if( qId !== null){
+				var o_ques = JSON.parse( JSON.parse( msg[1] ).qId ), answerAry = o_ques.answer.sort(), resultAry = [], current = null, count = 0;
+				for( var i=0, iLen=o_ques.num; i<=iLen; i++ ){
+					resultAry[i] = 0;
+				}
+				for( var i=0, iLen=answerAry.length; i<iLen; i++ ){
+					if( answerAry[i] != current ){
+						if( count > 0 ){
+							resultAry[current] = count;
+						}
+						current = answerAry[i];
+						count = 1;
+					}else{
+						count++;
+					}
+				}
+				if( count > 0 ){
+					resultAry[current] = count;
+				}
+				console.log(answerAry);
+				console.log(resultAry);
+				// 顯示投票的結果
+				drawBarChart(e, resultAry);
+			}else{  // 沒有任何問題時...
+				drawBarChart(e, [0]);
 			}
 		},
 		error:function(xhr, ajaxOptions, thrownError){ 
@@ -25,61 +71,7 @@ function bindRoom(sInfo){
 			console.log(thrownError);
 		}
 	});	
-	var roomRef = myRootRef.child('rooms').child(sInfo['roomId']);
-	roomRef.on('child_changed', function(snapshot, prevChildName){
-		if( snapshot.name() === 'question' ){ // Teacher 有提出問題
-			console.log(snapshot.val());
-
-			sInfo.qAry = [];
-			sInfo.qAry.unshift(snapshot.val());
-			localStorage.setItem('sInfo', JSON.stringify(sInfo));
-
-			roomRef.child(snapshot.val()).once('value', function(data){
-				showVote(JSON.parse(data.val()));
-			});
-		}else if( snapshot.name() === 'messages' ){  // Key 更新 : Messages
-			var message = JSON.parse(snapshot.val());
-			if( message[0]['teacher'] ){
-				var $a = $('#container');
-				$a.children().children().append(getMessagesHtml('Text', message[0]['teacher'].substr(25), message[0]['teacher'].split('_')[1] , 'teacher'));
-				$a.animate({scrollTop: $a.prop('scrollHeight')}, 500);
-			}
-		}
-	});
 }
-
-// // 
-// function getVoteResults(e, sInfo){
-// 	var roomRef = myRootRef.child('rooms').child(sInfo['roomId']), sId = sInfo.sId, qId = sInfo.qAry[0] || null;
-// 	if( qId !== null){
-// 		roomRef.child(qId).once('value', function(data){
-// 			var o_ques = JSON.parse(data.val()), answerAry = o_ques.answer.sort(), resultAry = [], current = null, count = 0;
-// 			for( var i=0, iLen=o_ques.num; i<=iLen; i++ ){
-// 				resultAry[i] = 0;
-// 			}
-// 			for( var i=0, iLen=answerAry.length; i<iLen; i++ ){
-// 				if( answerAry[i] != current ){
-// 					if( count > 0 ){
-// 						resultAry[current] = count;
-// 					}
-// 					current = answerAry[i];
-// 					count = 1;
-// 				}else{
-// 					count++;
-// 				}
-// 			}
-// 			if( count > 0 ){
-// 				resultAry[current] = count;
-// 			}
-// 			console.log(answerAry);
-// 			console.log(resultAry);
-// 			// 顯示投票的結果
-// 			drawBarChart(e, resultAry);
-// 		});
-// 	}else{  // 沒有任何問題時...
-// 		drawBarChart(e, [0]);
-// 	}
-// }
 
 // 更新連線狀態
 function updateState(sInfo){
@@ -360,7 +352,6 @@ function getLog(sInfo){
 		type: 'POST',
 		dataType: 'html',
 		success: function(msg){
-			console.log(msg);
 			msg = msg.split('@@');
 			var ary = JSON.parse(JSON.parse( msg[1] ).messages) || null, sLog = [];
 			if( ary !== null ){
@@ -388,6 +379,7 @@ function sentAnswer(answerAry, sInfo){
 		type: 'POST',
 		dataType: 'html',
 		success: function(msg){
+		msg = msg.split('@@');
 		var o_ques = JSON.parse(JSON.parse( msg[1] ).messages), o_answer = {};
 				for( var i=0, iLen=answerAry.length; i<iLen; i++ ){
 					o_ques.answer.push(answerAry[i]);
@@ -424,6 +416,7 @@ function setStudentId(sInfo){
 		type: 'POST',
 		dataType: 'html',
 		success: function(msg){
+			msg = msg.split('@@');
 			var ary = JSON.parse( msg[1] ).online_s || null, sNumber = randomInt(1, 100);
 			console.log(ary);
 			if( ary !== null ){
