@@ -22,19 +22,17 @@ switch ($_POST['action']) {
 				$ary_codes = unserialize($a['value']);
 			}
 		}
-		//清除房間資料
-		$query = sprintf( "DELETE FROM `rooms` WHERE key1 = '$roomId'" );
-		$result = mysql_query($query) or die('error@清除過期的rooms失敗');
 		//清除過期的房間密碼
 		$query = sprintf( "SELECT value FROM `rooms` WHERE key1 = '$roomId'" );
-		$result = mysql_query($query) or die('error@取得過期房間密碼失敗。');
+		$result = mysql_query($query) or die('error@取得房間value失敗。');
 		if( mysql_num_rows( $result ) > 0 ){    // 有資料
 			while( $a = mysql_fetch_array($result) ){
 				$ary = unserialize($a['value']);
 			}
 		}
-		$key = array_search($ary['code'],$ary_codes,true);
+		$key = array_search($ary['roomCode'],$ary_codes,true);
 		unset($ary_codes[$key]);
+
 		$ary_codes = serialize($ary_codes);
 		$query = sprintf( "UPDATE `codes` SET value = '$ary_codes' WHERE key1 = 'array'" );
 		$result = mysql_query($query);
@@ -42,6 +40,10 @@ switch ($_POST['action']) {
 			$message  = 'error@更新過期的房間密碼失敗。';
 			die($message);
 		}
+		//清除房間資料
+		$query = sprintf( "DELETE FROM `rooms` WHERE key1 = '$roomId'" );
+		$result = mysql_query($query) or die('error@清除過期的rooms失敗');
+		
 			break;
 	case 'creatroom':
 		$roomId = $_POST['roomId'];

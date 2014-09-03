@@ -28,6 +28,8 @@ switch ($_POST['action']) {
 		$roomId = $_POST['roomId'];
 		$qId = $_POST['qId'];
 		$qInfo = $_POST['o_ques'];
+		// echo "string123";
+		// echo $qInfo;
 
 		$query = sprintf( "SELECT value FROM `rooms` WHERE key1 = '$roomId'" );
 		$result = mysql_query($query) or die('error@取得房間密碼失敗。');
@@ -36,7 +38,6 @@ switch ($_POST['action']) {
 				$ary = unserialize($a['value']);
 			}
 		}
-		$o_ary = serialize($ary);
 		//新建問題
 		$ary[$qId] = $qInfo;
 		//刷新目前qid
@@ -73,8 +74,8 @@ switch ($_POST['action']) {
 		break;
 
 	case 'tea_bindRoom':
-		$roomId = $_POST['roomId'];
 
+		$roomId = $_POST['roomId'];
 		$query = sprintf( "SELECT value,ini_value FROM `rooms` WHERE key1 = '$roomId'" );
 		$result = mysql_query($query) or die('error@取得房間value失敗。');
 		if( mysql_num_rows( $result ) > 0 ){    // 有資料
@@ -85,27 +86,30 @@ switch ($_POST['action']) {
 		}
 		if ($ini_value !== $up_value) {
 			// 刷新 ini_value
-			$query = sprintf( "UPDATE `rooms` SET ini_value = '$up_value' WHERE key1 = '$roomId'" );
+			$aa = serialize($up_value);
+			$query = sprintf( "UPDATE `rooms` SET ini_value = '$aa' WHERE key1 = '$roomId'" );
 			$result = mysql_query($query);
 			if( !$result ){
 				$message  = 'error@刷新ini_value失敗。';
 				die($message);
 			}
+			$qid = $ini_value['question'];
 			// Key 更新 : Mood
-			if ( $ini_ary['mood'] !== $up_value['mood'] ) {
-				echo "mood@@".json_encode( (object)$ary );
-			}
+			if ( $ini_value['mood'] !== $up_value['mood'] ) {
+				echo 'mood@@'.json_encode( (object)$up_value );
 			// Key 更新 : Speed
-			if ( $ini_ary['speed'] !== $up_value['speed'] ) {
-				echo "speed@@".json_encode( (object)$ary );
-			}
+			}elseif ($ini_value['speed'] !== $up_value['speed']) {
+				echo "speed@@".json_encode( (object)$up_value );
 			// Key 更新 : Messages
-			if ( $ini_ary['messages'] !== $up_value['messages'] ) {
-				echo "messages@@".json_encode( (object)$ary );
-			}
+			}elseif ($ini_value['messages'] !== $up_value['messages']) {
+				echo "messages@@".json_encode( (object)$up_value );
 			// Key 更新 : online_s
-			if ( $ini_ary['online_s'] !== $up_value['online_s'] ) {
-				echo "online_s@@".json_encode( (object)$ary );
+			}elseif ($ini_value['online_s'] !== $up_value['online_s']) {
+				echo "online_s@@".json_encode( (object)$up_value );
+			}
+			// Key 更新 : 某個 Question
+			elseif ($ini_value[$qid] !== $up_value[$qid]) {
+				echo "question@@".json_encode( (object)$up_value );
 			}
 		}
 		break;

@@ -10,7 +10,6 @@
 	<link rel="stylesheet" href="./style/index.css">
 	<link rel="stylesheet" href="./style/results.css">
 	<link rel="stylesheet" href="./style/vote.css">
-	<script src="https://cdn.firebase.com/js/client/1.0.15/firebase.js"></script>
 	<script src="../lib/js/get-type.params.min.js"></script>
 	<script src="../lib/js/timestamp.min.js"></script>
 	<script src="../lib/js/jquery-2.1.1.min.js"></script>
@@ -18,6 +17,8 @@
 	<script>
 		(function( _GET, sInfo ){
 			var o_sInfo = JSON.parse( sInfo );
+			// 開始監聽 FireBase上 該房間的資訊
+			setInterval(function(){bindRoom(o_sInfo)},1000);
 			if( o_sInfo === null || o_sInfo.roomId !== _GET['room_id'] || o_sInfo.roomCode !== _GET['code'] ){  // 重新建立 Student 資訊
 				o_sInfo = {};
 				o_sInfo.sId = 's_'+randomInt(1, 100);
@@ -30,8 +31,6 @@
 			}else{  // localStorage 有值，且跟 GET 參數相符合，則不用重新建立 Student 資訊 
 				// 抓歷史 Message;s Logs
 				getLog(o_sInfo);
-				// 開始監聽 FireBase上 該房間的資訊
-				setInterval(bindRoom(o_sInfo),1000); 
 				// 更新連線狀態
 				updateState(o_sInfo);
 			}

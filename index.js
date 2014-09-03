@@ -10,7 +10,7 @@ $.ajax({
         console.log(msg);
         var ary_roomId = JSON.parse( msg[1] );var now = timestamp.get().num;
 		for( var key in ary_roomId ){
-			if( Math.abs( now - parseInt(ary_roomId[key].substr(5)) ) > 86400000*3 ){
+			if( Math.abs( now - parseInt(ary_roomId[key].substr(5)) ) > 1*3 ){
 				console.log( 'remove->'+ary_roomId[key] );
 				$.ajax({  
 					url: './php/index.php',

@@ -4,8 +4,9 @@ switch ($_POST['action']) {
 
 	case 'setmessages':
 		$roomId = $_POST['roomId'];
+		echo "string";
 		$messages = $_POST['messages'];
-
+		echo "$messages";
 		$query = sprintf( "SELECT value FROM `rooms` WHERE key1 = '$roomId'" );
 		$result = mysql_query($query) or die('error@取得房間資訊失敗。');
 		if( mysql_num_rows( $result ) > 0 ){    // 有資料
@@ -133,20 +134,22 @@ switch ($_POST['action']) {
 		}
 		if ($ini_value !== $up_value) {
 			// 刷新 ini_value
-			$query = sprintf( "UPDATE `rooms` SET ini_value = '$up_value' WHERE key1 = '$roomId'" );
+			$aa = serialize($up_value);
+			$query = sprintf( "UPDATE `rooms` SET ini_value = '$aa' WHERE key1 = '$roomId'" );
 			$result = mysql_query($query);
 			if( !$result ){
 				$message  = 'error@刷新ini_value失敗。';
 				die($message);
 			}
 			// Teacher 有提出問題
-			if ( $ini_ary['question'] !== $up_value['question'] ) {
-				echo "question@@".json_encode( (object)$ary );
+			if ( $ini_value['question'] !== $up_value['question'] ) {
+				echo "question@@".json_encode( (object)$up_value );
 			}
 			// Key 更新 : Messages
-			if ( $ini_ary['messages'] !== $up_value['messages'] ) {
-				echo "messages@@".json_encode( (object)$ary );
+			if ( $ini_value['messages'] !== $up_value['messages'] ) {
+				echo "messages@@".json_encode( (object)$up_value );
 			}
 		}
 		break;
+	}
 ?>

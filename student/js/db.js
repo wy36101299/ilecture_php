@@ -1,4 +1,7 @@
-// 開始監聽 FireBase上 該房間的資訊
+// function bindRoom(sInfo){
+// 	setInterval(function(){st_bindRoom(sInfo)},1000);
+// }
+//開始監聽 FireBase上 該房間的資訊
 function bindRoom(sInfo){
 	$.ajax({  
 		url: '../php/student_db.php',
@@ -6,14 +9,15 @@ function bindRoom(sInfo){
 		type: 'POST',
 		dataType: 'html',
 		success: function(msg){
+			console.log('st binding')
 			msg = msg.split('@@');
-			if( msg[0] === 'question' ){ // Teacher 有提出問題
+			if( msg[0].trim() === 'question' ){ // Teacher 有提出問題
 				var qId = JSON.parse( msg[1] ).question;
 				sInfo.qAry = [];
 				sInfo.qAry.unshift(qId);
 				localStorage.setItem('sInfo', JSON.stringify(sInfo));
-				showVote(JSON.parse( JSON.parse( msg[1] ).qId) );
-			}else if( msg[0] === 'messages' ){  // Key 更新 : Messages
+				showVote( JSON.parse( JSON.parse( msg[1] )[qId] ) );
+			}else if( msg[0].trim() === 'messages' ){  // Key 更新 : Messages
 				var message = JSON.parse(JSON.parse( msg[1] ).messages);
 				if( message[0]['teacher'] ){
 					var $a = $('#container');
@@ -28,7 +32,6 @@ function bindRoom(sInfo){
 		}
 	});
 }
-
 // 取得投票結果
 function getVoteResults(e, sInfo){
 	sId = sInfo.sId, qId = sInfo.qAry[0] || null;
@@ -40,7 +43,7 @@ function getVoteResults(e, sInfo){
 		success: function(msg){
 			msg = msg.split('@@');
 			if( qId !== null){
-				var o_ques = JSON.parse( JSON.parse( msg[1] ).qId ), answerAry = o_ques.answer.sort(), resultAry = [], current = null, count = 0;
+				var o_ques = JSON.parse( JSON.parse( msg[1] )[qId] ), answerAry = o_ques.answer.sort(), resultAry = [], current = null, count = 0;
 				for( var i=0, iLen=o_ques.num; i<=iLen; i++ ){
 					resultAry[i] = 0;
 				}
@@ -81,7 +84,6 @@ function updateState(sInfo){
 		type: 'POST',
 		dataType: 'html',
 		success: function(msg){
-			console.log(msg);
 			msg = msg.split('@@');
 			var ary = JSON.parse(JSON.parse( msg[1] ).online_s) || null, o_state = {}, count = -1;
 			o_state[sInfo['sId']] = timestamp.get().num;
@@ -101,17 +103,16 @@ function updateState(sInfo){
 				ary = [];
 				ary.push(o_state);
 			}
-			console.log( ary );
 			$.ajax({  
 				url: '../php/student_db.php',
 				data:{'action': 'updateState','roomId':sInfo['roomId'],'online_s':JSON.stringify(ary)},
 				type: 'POST',
 				dataType: 'html',
 				success: function(msg){
-					console.log(msg);
+					// console.log(msg);
 					// 每「10秒」更新一次
-					setTimeout(function(){ updateState(sInfo); }, 1*1*1000);
-					console,log('update');
+					setTimeout(function(){ updateState(sInfo); }, 1*10*1000);
+					// console.log('update');
 				},
 				error:function(xhr, ajaxOptions, thrownError){ 
 					console.log(xhr.status); 
@@ -379,8 +380,9 @@ function sentAnswer(answerAry, sInfo){
 		type: 'POST',
 		dataType: 'html',
 		success: function(msg){
-		msg = msg.split('@@');
-		var o_ques = JSON.parse(JSON.parse( msg[1] ).messages), o_answer = {};
+			msg = msg.split('@@');
+			var qId = JSON.parse( msg[1] ).question;
+			var o_ques = JSON.parse( JSON.parse( msg[1] )[qId] ), o_answer = {};
 				for( var i=0, iLen=answerAry.length; i<iLen; i++ ){
 					o_ques.answer.push(answerAry[i]);
 				}
