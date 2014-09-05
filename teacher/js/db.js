@@ -26,9 +26,6 @@ function checkAuth(tInfo, auth){
 		}
 	});	
 }
-// function bindRoom(tInfo){
-// 	setInterval(function(){tea_bindRoom(tInfo)},1000); 
-// }
 //開始監聽 FireBase上 該房間的資訊
 function bindRoom(tInfo){
 	$.ajax({  
@@ -46,12 +43,12 @@ function bindRoom(tInfo){
 			}else if( msg[0].trim() === 'speed' ){  // Key 更新 : Speed
 				setSpeedInfo( $('#pieChart'), JSON.parse( msg[1] ).speed );
 			}else if( msg[0].trim() === 'messages' ){  // Key 更新 : Messages
-				addMessages( tInfo, JSON.parse( JSON.parse( msg[1] ).messages ) );
+				addMessages( tInfo, JSON.parse( msg[1] ).messages );
 			}else if( msg[0].trim() === 'question' ){  // Key 更新 : 某個 Question
 				var tInfo = JSON.parse(localStorage.tInfo), qId = tInfo.qAry.shift();
 				if( JSON.parse( msg[1] ).question === qId ){  // 取得投票的結果
 					console.log(JSON.parse( msg[1] )[qId]);
-					var o_ques = JSON.parse(JSON.parse( msg[1] )[qId]), answerAry = o_ques.answer.sort(), resultAry = [], current = null, count = 0;
+					var o_ques = JSON.parse( msg[1] )[qId], answerAry = o_ques.answer.sort(), resultAry = [], current = null, count = 0;
 					for( var i=0, iLen=o_ques.num; i<=iLen; i++ ){
 						resultAry[i] = 0;
 					}
@@ -95,7 +92,7 @@ function updateOnline_s(){ console.log('Update : online_s !');
 		dataType: 'html',
 		success: function(msg){
 			msg = msg.split('@@');
-			var ary = JSON.parse(JSON.parse( msg[1] ).online_s) || null, newAry = [], num = 0, now = timestamp.get().num;
+			var ary = JSON.parse( msg[1] ).online_s || null, newAry = [], num = 0, now = timestamp.get().num;
 			if( ary !== null ){  // Student 連線人數不為空
 				for( var i=0, aryLen = ary.length; i<aryLen; i++ ){
 					for( var key in ary[i] ){
@@ -201,7 +198,7 @@ function getLog(tInfo){
 		dataType: 'html',
 		success: function(msg){
 			msg = msg.split('@@');
-			var ary = JSON.parse(JSON.parse( msg[1] ).messages) || null, tLog = [];
+			var ary = JSON.parse( msg[1] ).messages || null, tLog = [];
 			if( ary !== null ){
 				for( var i=0, aryLen = ary.length; i<aryLen; i++ ){
 					tLog.unshift(ary[i]);
@@ -255,7 +252,7 @@ function sendText(e, tInfo, text){
 		success: function(msg){
 			console.log(msg);
 			msg = msg.split('@@');
-			var ary = JSON.parse(JSON.parse( msg[1] ).messages) || null, o_send = {}, time = timestamp.get().read, $a = $(e).parents('#sidebar-message').children('section');
+			var ary = JSON.parse( msg[1] ).messages || null, o_send = {}, time = timestamp.get().read, $a = $(e).parents('#sidebar-message').children('section');
 			o_send['teacher'] = 'text_'+time+'_'+text;
 			if( ary === null ){
 				ary = [];
@@ -298,7 +295,7 @@ function getResult(tInfo){
 		dataType: 'html',
 		success: function(msg){
 			msg = msg.split('@@');
-			var o_ques = JSON.parse( JSON.parse( msg[1] )[qId] ), answerAry = o_ques.answer.sort(), resultAry = [], current = null, count = 0;
+			var o_ques =  JSON.parse( msg[1] )[qId], answerAry = o_ques.answer.sort(), resultAry = [], current = null, count = 0;
 			console.log( o_ques );
 			for( var i=0, iLen=o_ques.num; i<iLen; i++ ){
 				resultAry[i] = 0;

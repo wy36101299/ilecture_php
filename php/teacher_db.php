@@ -27,9 +27,7 @@ switch ($_POST['action']) {
 	case 'createQuestion':
 		$roomId = $_POST['roomId'];
 		$qId = $_POST['qId'];
-		$qInfo = $_POST['o_ques'];
-		// echo "string123";
-		// echo $qInfo;
+		$qInfo = json_decode($_POST['o_ques']);
 
 		$query = sprintf( "SELECT value FROM `rooms` WHERE key1 = '$roomId'" );
 		$result = mysql_query($query) or die('error@取得房間密碼失敗。');
@@ -51,8 +49,8 @@ switch ($_POST['action']) {
 		}
 		break;
 
-	case 'online_s':
-		$online_s = $_POST['online_s'];
+	case 'setonline_s':
+		$online_s = json_decode($_POST['online_s']);
 
 		$query = sprintf( "SELECT value FROM `rooms` WHERE key1 = '$roomId'" );
 		$result = mysql_query($query) or die('error@取得房間資訊失敗。');

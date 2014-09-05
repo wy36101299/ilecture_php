@@ -5,7 +5,7 @@ switch ($_POST['action']) {
 	case 'setmessages':
 		$roomId = $_POST['roomId'];
 		echo "string";
-		$messages = $_POST['messages'];
+		$messages = json_decode($_POST['messages']);
 		echo "$messages";
 		$query = sprintf( "SELECT value FROM `rooms` WHERE key1 = '$roomId'" );
 		$result = mysql_query($query) or die('error@取得房間資訊失敗。');
@@ -76,7 +76,7 @@ switch ($_POST['action']) {
 
 	case 'updateState':
 		$roomId = $_POST['roomId'];
-		$online_s = $_POST['online_s'];
+		$online_s = json_decode($_POST['online_s']);
 
 		$query = sprintf( "SELECT value FROM `rooms` WHERE key1 = '$roomId'" );
 		$result = mysql_query($query) or die('error@取得房間資訊失敗。');
@@ -99,7 +99,7 @@ switch ($_POST['action']) {
 
 	case 'sentAnswer':
 		$roomId = $_POST['roomId'];
-		$answer = $_POST['answer'];
+		$answer = json_decode($_POST['answer']);
 		$qId = $_POST['qId'];
 
 		$query = sprintf( "SELECT value FROM `rooms` WHERE key1 = '$roomId'" );

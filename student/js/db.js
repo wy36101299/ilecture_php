@@ -16,9 +16,9 @@ function bindRoom(sInfo){
 				sInfo.qAry = [];
 				sInfo.qAry.unshift(qId);
 				localStorage.setItem('sInfo', JSON.stringify(sInfo));
-				showVote( JSON.parse( JSON.parse( msg[1] )[qId] ) );
+				showVote( JSON.parse( msg[1] )[qId] );
 			}else if( msg[0].trim() === 'messages' ){  // Key 更新 : Messages
-				var message = JSON.parse(JSON.parse( msg[1] ).messages);
+				var message = JSON.parse( msg[1] ).messages;
 				if( message[0]['teacher'] ){
 					var $a = $('#container');
 					$a.children().children().append(getMessagesHtml('Text', message[0]['teacher'].substr(25), message[0]['teacher'].split('_')[1] , 'teacher'));
@@ -43,7 +43,7 @@ function getVoteResults(e, sInfo){
 		success: function(msg){
 			msg = msg.split('@@');
 			if( qId !== null){
-				var o_ques = JSON.parse( JSON.parse( msg[1] )[qId] ), answerAry = o_ques.answer.sort(), resultAry = [], current = null, count = 0;
+				var o_ques = JSON.parse( msg[1] )[qId], answerAry = o_ques.answer.sort(), resultAry = [], current = null, count = 0;
 				for( var i=0, iLen=o_ques.num; i<=iLen; i++ ){
 					resultAry[i] = 0;
 				}
@@ -85,7 +85,7 @@ function updateState(sInfo){
 		dataType: 'html',
 		success: function(msg){
 			msg = msg.split('@@');
-			var ary = JSON.parse(JSON.parse( msg[1] ).online_s) || null, o_state = {}, count = -1;
+			var ary = JSON.parse( msg[1] ).online_s || null, o_state = {}, count = -1;
 			o_state[sInfo['sId']] = timestamp.get().num;
 			if( ary !== null ){
 				for( var i=0, aryLen = ary.length; i<aryLen; i++ ){
@@ -137,7 +137,7 @@ function sendMood(e, sInfo){
 		success: function(msg){
 			console.log(msg);
 			msg = msg.split('@@');
-			var ary = JSON.parse(JSON.parse( msg[1] ).messages) || null, o_send = {}, count = -1, time = timestamp.get().read, oldScores = 0, nowScores = parseInt($(e).attr('_mood')), newTimes = 1;
+			var ary = JSON.parse( msg[1] ).messages || null, o_send = {}, count = -1, time = timestamp.get().read, oldScores = 0, nowScores = parseInt($(e).attr('_mood')), newTimes = 1;
 			o_send[sInfo['sId']] = 'mood_'+time+'_'+nowScores;
 			if( ary !== null ){
 				for( var i=0, aryLen = ary.length; i<aryLen; i++ ){
@@ -225,7 +225,7 @@ function sendSpeed(e, sInfo){
 		success: function(msg){
 			console.log(msg);
 			msg = msg.split('@@');
-			var ary = JSON.parse(JSON.parse( msg[1] ).messages) || null, o_send = {}, count = -1, time = timestamp.get().read, oldScores = 0, nowScores = parseInt($(e).attr('_speed')), newTimes = 1;
+			var ary = JSON.parse( msg[1] ).messages || null, o_send = {}, count = -1, time = timestamp.get().read, oldScores = 0, nowScores = parseInt($(e).attr('_speed')), newTimes = 1;
 			o_send[sInfo['sId']] = 'speed_'+time+'_'+nowScores;
 			if( ary !== null ){
 				for( var i=0, aryLen = ary.length; i<aryLen; i++ ){
@@ -314,7 +314,7 @@ function sendText(e, sInfo, text){
 		success: function(msg){
 			console.log(msg);
 			msg = msg.split('@@');
-			var ary = JSON.parse(JSON.parse( msg[1] ).messages) || null, o_send = {}, time = timestamp.get().read;
+			var ary = JSON.parse( msg[1] ).messages || null, o_send = {}, time = timestamp.get().read;
 			o_send[sInfo['sId']] = 'text_'+time+'_'+text;
 			if( ary === null ){
 				ary = [];
@@ -354,7 +354,7 @@ function getLog(sInfo){
 		dataType: 'html',
 		success: function(msg){
 			msg = msg.split('@@');
-			var ary = JSON.parse(JSON.parse( msg[1] ).messages) || null, sLog = [];
+			var ary = JSON.parse( msg[1] ).messages || null, sLog = [];
 			if( ary !== null ){
 				for( var i=0, aryLen = ary.length; i<aryLen; i++ ){
 					if( sInfo['sId'] in ary[i] || 'teacher' in ary[i] ){
@@ -382,7 +382,7 @@ function sentAnswer(answerAry, sInfo){
 		success: function(msg){
 			msg = msg.split('@@');
 			var qId = JSON.parse( msg[1] ).question;
-			var o_ques = JSON.parse( JSON.parse( msg[1] )[qId] ), o_answer = {};
+			var o_ques = JSON.parse( msg[1] )[qId] , o_answer = {};
 				for( var i=0, iLen=answerAry.length; i<iLen; i++ ){
 					o_ques.answer.push(answerAry[i]);
 				}
