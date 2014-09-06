@@ -12,7 +12,7 @@ $(function(){
 	initPieChart(getUrlVars()['room_id']);
 	
 	// 轉換 Student 網址成短網址並生成 QR-Code
-	getTinyURL('http://merry.ee.ncku.edu.tw/~thwang/ilecture/student/index.html?room_id='+getUrlVars()['room_id']+'&code='+getUrlVars()['code'], getUrlVars()['code']);
+	getTinyURL('http://localhost/git_project/ilecture_php/student/index.html?room_id='+getUrlVars()['room_id']+'&code='+getUrlVars()['code'], getUrlVars()['code']);
 });
 
 // Hash 發生改變時...

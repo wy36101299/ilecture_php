@@ -26,6 +26,7 @@
 				o_sInfo.roomCode = _GET['code'];
 				o_sInfo.qAry = [];
 				o_sInfo.params = 'room_id='+_GET['room_id']+'&code='+_GET['code'];
+				o_sInfo.messages = null;
 				localStorage.setItem('sInfo', JSON.stringify(o_sInfo));
 				setStudentId(o_sInfo);
 			}else{  // localStorage 有值，且跟 GET 參數相符合，則不用重新建立 Student 資訊 

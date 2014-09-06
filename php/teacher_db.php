@@ -1,6 +1,7 @@
 <?php
 include('db.php');
 switch ($_POST['action']) {
+
 	case 'checkAuth':
 		$roomsId = $_POST['roomsId'];
 		$query = sprintf( "SELECT value FROM `rooms` WHERE key1 = '$roomsId'" );
@@ -12,6 +13,7 @@ switch ($_POST['action']) {
 		}
 		echo 'success@@'.$ary['auth'];
 		break;
+
 	case 'initPieChart':
 		$roomId = $_POST['roomId'];
 		$query = sprintf( "SELECT value FROM `rooms` WHERE key1 = '$roomId'" );
@@ -98,12 +100,10 @@ switch ($_POST['action']) {
 			// Key 更新 : Speed
 			}elseif ($ini_value['speed'] !== $up_value['speed']) {
 				echo "speed@@".json_encode( (object)$up_value );
-			// Key 更新 : Messages
-			}elseif ($ini_value['messages'] !== $up_value['messages']) {
-				echo "messages@@".json_encode( (object)$up_value );
 			// Key 更新 : online_s
-			}elseif ($ini_value['online_s'] !== $up_value['online_s']) {
-				echo "online_s@@".json_encode( (object)$up_value );
+			}elseif (serialize($ini_value['online_s']) !== serialize($up_value['online_s'])) {
+				// echo "online_s@@".json_encode( (object)$up_value );
+				echo "online_s@@22online@@".json_encode( (object)$ini_value['online_s'] ).'@@'.json_encode( (object)$up_value['online_s'] );
 			}
 			// Key 更新 : 某個 Question
 			elseif ($ini_value[$qid] !== $up_value[$qid]) {

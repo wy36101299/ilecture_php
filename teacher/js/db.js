@@ -38,16 +38,11 @@ function bindRoom(tInfo){
 			msg = msg.split('@@');
 			if( msg[0].trim() === 'mood' ){  // Key 更新 : Mood
 				setMoodInfo( $('#pieChart'), JSON.parse( msg[1] ).mood );
-				console.log('MOOD')
-				console.log(JSON.parse( msg[1] ).mood)
 			}else if( msg[0].trim() === 'speed' ){  // Key 更新 : Speed
 				setSpeedInfo( $('#pieChart'), JSON.parse( msg[1] ).speed );
-			}else if( msg[0].trim() === 'messages' ){  // Key 更新 : Messages
-				addMessages( tInfo, JSON.parse( msg[1] ).messages );
 			}else if( msg[0].trim() === 'question' ){  // Key 更新 : 某個 Question
 				var tInfo = JSON.parse(localStorage.tInfo), qId = tInfo.qAry.shift();
 				if( JSON.parse( msg[1] ).question === qId ){  // 取得投票的結果
-					console.log(JSON.parse( msg[1] )[qId]);
 					var o_ques = JSON.parse( msg[1] )[qId], answerAry = o_ques.answer.sort(), resultAry = [], current = null, count = 0;
 					for( var i=0, iLen=o_ques.num; i<=iLen; i++ ){
 						resultAry[i] = 0;
@@ -74,6 +69,7 @@ function bindRoom(tInfo){
 			}else if( msg[0].trim() === 'online_s' ){  // Key 更新 : online_s
 				updateOnline_s();
 			}
+			bindmessages();
 		},
 		error:function(xhr, ajaxOptions, thrownError){ 
 			console.log(xhr.status); 
@@ -81,7 +77,33 @@ function bindRoom(tInfo){
 		}
 	});
 }
+function bindmessages(){
+	var roomId = JSON.parse(localStorage.getItem('tInfo')).roomId
+	$.ajax({  
+		url: '../php/index.php',
+		data:{'action': 'getroomvalue','roomId':roomId},
+		type: 'POST',
+		dataType: 'html',
+		success: function(msg){
+			var tInfo = JSON.parse(localStorage.getItem('tInfo'));
+			msg = msg.split('@@');
+				// Key 更新 : Messages
+			var message = JSON.parse( msg[1] ).messages;
+			var localMessage = tInfo.messages;
 
+			if ( JSON.stringify(message) != JSON.stringify(localMessage) ) {
+				addMessages( tInfo, JSON.parse( msg[1] ).messages );
+				tInfo.messages = message;
+
+				localStorage.setItem('tInfo', JSON.stringify(tInfo));
+			};	
+		},
+		error:function(xhr, ajaxOptions, thrownError){ 
+			console.log(xhr.status); 
+			console.log(thrownError);
+		}
+	});
+}
 // 更新 Student 連線者名單
 function updateOnline_s(){ console.log('Update : online_s !');
 	var tInfo = JSON.parse( localStorage.tInfo ), roomId = tInfo.roomId, num = 0;
@@ -115,7 +137,6 @@ function updateOnline_s(){ console.log('Update : online_s !');
 				type: 'POST',
 				dataType: 'html',
 				success: function(msg){
-					console.log(msg);
 					$('#container span[_online=num], #linkRoom-box span[_online=num]').text(num);
 					tInfo.online_s = num;
 					localStorage.setItem('tInfo', JSON.stringify(tInfo));
@@ -224,8 +245,6 @@ function createQuestion(e, tInfo){
 	}, qId = 'q_'+timestamp.get().num;
 	tInfo.qAry = [];
 	tInfo.qAry.unshift( qId );
-	// console.log( tInfo );
-	// console.log( tInfo.qAry );
 	localStorage.setItem('tInfo', JSON.stringify(tInfo));
 	$.ajax({  
 		url: '../php/teacher_db.php',
@@ -250,7 +269,6 @@ function sendText(e, tInfo, text){
 		type: 'POST',
 		dataType: 'html',
 		success: function(msg){
-			console.log(msg);
 			msg = msg.split('@@');
 			var ary = JSON.parse( msg[1] ).messages || null, o_send = {}, time = timestamp.get().read, $a = $(e).parents('#sidebar-message').children('section');
 			o_send['teacher'] = 'text_'+time+'_'+text;
@@ -260,15 +278,12 @@ function sendText(e, tInfo, text){
 			}else{
 				ary.unshift(o_send);
 			}
-			console.log(ary);
-			console.log('這裡')
 			$.ajax({  
-				url: '../php/student_db.php',
+				url: '../php/index.php',
 				data:{'action': 'setmessages','roomId':tInfo['roomId'],'messages':JSON.stringify(ary)},
 				type: 'POST',
 				dataType: 'html',
 				success: function(msg){
-					console.log(msg);
 					$(e).prev().val('');
 					$a.animate({scrollTop: $a.prop('scrollHeight')}, 500);
 				},
@@ -296,7 +311,6 @@ function getResult(tInfo){
 		success: function(msg){
 			msg = msg.split('@@');
 			var o_ques =  JSON.parse( msg[1] )[qId], answerAry = o_ques.answer.sort(), resultAry = [], current = null, count = 0;
-			console.log( o_ques );
 			for( var i=0, iLen=o_ques.num; i<iLen; i++ ){
 				resultAry[i] = 0;
 			}

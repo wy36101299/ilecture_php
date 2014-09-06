@@ -1,6 +1,3 @@
-// function bindRoom(sInfo){
-// 	setInterval(function(){st_bindRoom(sInfo)},1000);
-// }
 //開始監聽 FireBase上 該房間的資訊
 function bindRoom(sInfo){
 	$.ajax({  
@@ -17,14 +14,37 @@ function bindRoom(sInfo){
 				sInfo.qAry.unshift(qId);
 				localStorage.setItem('sInfo', JSON.stringify(sInfo));
 				showVote( JSON.parse( msg[1] )[qId] );
-			}else if( msg[0].trim() === 'messages' ){  // Key 更新 : Messages
-				var message = JSON.parse( msg[1] ).messages;
+			}
+			bindmessages();
+		},
+		error:function(xhr, ajaxOptions, thrownError){ 
+			console.log(xhr.status); 
+			console.log(thrownError);
+		}
+	});
+}
+function bindmessages(){
+	var roomId = JSON.parse(localStorage.getItem('sInfo')).roomId
+	$.ajax({  
+		url: '../php/index.php',
+		data:{'action': 'getroomvalue','roomId':roomId},
+		type: 'POST',
+		dataType: 'html',
+		success: function(msg){
+			var sInfo = JSON.parse(localStorage.getItem('sInfo'));
+			msg = msg.split('@@');
+			// Key 更新 : Messages
+			var message = JSON.parse( msg[1] ).messages;
+			var localMessage = sInfo.messages;
+			if ( JSON.stringify(message) != JSON.stringify(localMessage)) {
 				if( message[0]['teacher'] ){
 					var $a = $('#container');
 					$a.children().children().append(getMessagesHtml('Text', message[0]['teacher'].substr(25), message[0]['teacher'].split('_')[1] , 'teacher'));
 					$a.animate({scrollTop: $a.prop('scrollHeight')}, 500);
 				}
-			};
+				sInfo.messages = message;
+				localStorage.setItem('sInfo', JSON.stringify(sInfo));
+			};	
 		},
 		error:function(xhr, ajaxOptions, thrownError){ 
 			console.log(xhr.status); 
@@ -109,10 +129,8 @@ function updateState(sInfo){
 				type: 'POST',
 				dataType: 'html',
 				success: function(msg){
-					// console.log(msg);
 					// 每「10秒」更新一次
 					setTimeout(function(){ updateState(sInfo); }, 1*10*1000);
-					// console.log('update');
 				},
 				error:function(xhr, ajaxOptions, thrownError){ 
 					console.log(xhr.status); 
@@ -135,7 +153,6 @@ function sendMood(e, sInfo){
 		type: 'POST',
 		dataType: 'html',
 		success: function(msg){
-			console.log(msg);
 			msg = msg.split('@@');
 			var ary = JSON.parse( msg[1] ).messages || null, o_send = {}, count = -1, time = timestamp.get().read, oldScores = 0, nowScores = parseInt($(e).attr('_mood')), newTimes = 1;
 			o_send[sInfo['sId']] = 'mood_'+time+'_'+nowScores;
@@ -164,12 +181,11 @@ function sendMood(e, sInfo){
 				ary.push(o_send);
 			}
 			$.ajax({  
-				url: '../php/student_db.php',
+				url: '../php/index.php',
 				data:{'action': 'setmessages','roomId':sInfo['roomId'],'messages':JSON.stringify(ary)},
 				type: 'POST',
 				dataType: 'html',
 				success: function(msg){
-					console.log(msg);
 					addMessage('Mood', e, nowScores, time, sInfo['sId']);
 				},
 				error:function(xhr, ajaxOptions, thrownError){ 
@@ -183,7 +199,6 @@ function sendMood(e, sInfo){
 				type: 'POST',
 				dataType: 'html',
 				success: function(msg){
-					console.log(msg);
 					msg = msg.split('@@');
 					var scores = parseInt(JSON.parse( msg[1] ).mood.split('_')[0]) - oldScores + nowScores, times = parseInt(msg[1].split('_')[1]) + newTimes;
 					scores = scores+'_'+times;
@@ -193,7 +208,6 @@ function sendMood(e, sInfo){
 						type: 'POST',
 						dataType: 'html',
 						success: function(msg){
-							console.log(msg);
 						},
 						error:function(xhr, ajaxOptions, thrownError){ 
 							console.log(xhr.status); 
@@ -223,7 +237,6 @@ function sendSpeed(e, sInfo){
 		type: 'POST',
 		dataType: 'html',
 		success: function(msg){
-			console.log(msg);
 			msg = msg.split('@@');
 			var ary = JSON.parse( msg[1] ).messages || null, o_send = {}, count = -1, time = timestamp.get().read, oldScores = 0, nowScores = parseInt($(e).attr('_speed')), newTimes = 1;
 			o_send[sInfo['sId']] = 'speed_'+time+'_'+nowScores;
@@ -231,7 +244,6 @@ function sendSpeed(e, sInfo){
 				for( var i=0, aryLen = ary.length; i<aryLen; i++ ){
 					// 尋找是否已經有送出過 Speed ? 覆寫 : unshift，用 count 來判斷
 					if( sInfo['sId'] in ary[i] ){
-						console.log( ary[i][sInfo['sId']] );
 						if( ary[i][sInfo['sId']].split('_')[0] === 'speed' ){
 							oldScores = parseInt(ary[i][sInfo['sId']].split('_')[2]);
 							newTimes = 0;
@@ -252,12 +264,11 @@ function sendSpeed(e, sInfo){
 				ary.push(o_send);
 			}
 			$.ajax({  
-				url: '../php/student_db.php',
+				url: '../php/index.php',
 				data:{'action': 'setmessages','roomId':sInfo['roomId'],'messages':JSON.stringify(ary)},
 				type: 'POST',
 				dataType: 'html',
 				success: function(msg){
-					console.log(msg);
 					addMessage('Speed', e, nowScores, time, sInfo['sId']);
 				},
 				error:function(xhr, ajaxOptions, thrownError){ 
@@ -271,7 +282,6 @@ function sendSpeed(e, sInfo){
 				type: 'POST',
 				dataType: 'html',
 				success: function(msg){
-					console.log(msg);
 					msg = msg.split('@@');
 					var scores = parseInt(JSON.parse( msg[1] ).speed.split('_')[0]) - oldScores + nowScores, times = parseInt(msg[1].split('_')[1]) + newTimes;
 					scores = scores+'_'+times;
@@ -281,7 +291,6 @@ function sendSpeed(e, sInfo){
 						type: 'POST',
 						dataType: 'html',
 						success: function(msg){
-							console.log(msg);
 						},
 						error:function(xhr, ajaxOptions, thrownError){ 
 							console.log(xhr.status); 
@@ -312,7 +321,6 @@ function sendText(e, sInfo, text){
 		type: 'POST',
 		dataType: 'html',
 		success: function(msg){
-			console.log(msg);
 			msg = msg.split('@@');
 			var ary = JSON.parse( msg[1] ).messages || null, o_send = {}, time = timestamp.get().read;
 			o_send[sInfo['sId']] = 'text_'+time+'_'+text;
@@ -322,14 +330,12 @@ function sendText(e, sInfo, text){
 			}else{
 				ary.unshift(o_send);
 			}
-			console.log(ary);
 			$.ajax({  
-				url: '../php/student_db.php',
+				url: '../php/index.php',
 				data:{'action': 'setmessages','roomId':sInfo['roomId'],'messages':JSON.stringify(ary)},
 				type: 'POST',
 				dataType: 'html',
 				success: function(msg){
-					console.log(msg);
 					addMessage('Text', e, text, time, sInfo['sId']);
 				},
 				error:function(xhr, ajaxOptions, thrownError){ 
@@ -362,7 +368,6 @@ function getLog(sInfo){
 					}
 				}
 			}
-			console.log(sLog);
 			$(function(){ showLogs(sLog, sInfo); });
 		},
 		error:function(xhr, ajaxOptions, thrownError){ 
@@ -420,7 +425,6 @@ function setStudentId(sInfo){
 		success: function(msg){
 			msg = msg.split('@@');
 			var ary = JSON.parse( msg[1] ).online_s || null, sNumber = randomInt(1, 100);
-			console.log(ary);
 			if( ary !== null ){
 				var num = checkSIdIndex(ary, sInfo['sId']);
 				while( num >= 0 ){
@@ -429,7 +433,6 @@ function setStudentId(sInfo){
 				}
 				localStorage.setItem('sInfo', JSON.stringify(sInfo));
 			}
-			console.log(sInfo);
 			// 開始監聽 FireBase上 該房間的資訊
 			bindRoom(sInfo);
 			// 更新連線狀態

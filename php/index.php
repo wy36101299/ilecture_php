@@ -1,8 +1,10 @@
 <?php
 include('db.php');
 switch ($_POST['action']) {
+
 	case 'getary_roomId':
 		$ary_roomId = array();
+
 		$query = sprintf( "SELECT key1 FROM `rooms`" );
 		$result = mysql_query($query) or die('error@取得ary_roomId錯誤。');
 		if( mysql_num_rows( $result ) > 0 ){    // 有資料
@@ -12,8 +14,10 @@ switch ($_POST['action']) {
 		}
 		echo 'success@@'.json_encode( (object)$ary_roomId );
 		break;
+
 	case 'clear3daydata':
 		$roomId = $_POST['roomId'];
+
 		//取得$ary_codes
 		$query = sprintf( "SELECT value FROM `codes` WHERE key1 = 'array'" );
 		$result = mysql_query($query) or die('error@取得ary_codes錯誤。');
@@ -43,8 +47,8 @@ switch ($_POST['action']) {
 		//清除房間資料
 		$query = sprintf( "DELETE FROM `rooms` WHERE key1 = '$roomId'" );
 		$result = mysql_query($query) or die('error@清除過期的rooms失敗');
-		
-			break;
+		break;
+
 	case 'creatroom':
 		$roomId = $_POST['roomId'];
 		$roomCode = $_POST['roomCode'];
@@ -86,8 +90,7 @@ switch ($_POST['action']) {
 			$message  = 'error@創建新房間資訊失敗。';
 			die($message);
 		}
-
-		//初始化timestamp
+		//初始化up_value
 		$query = sprintf( "SELECT value FROM `rooms` WHERE key1 = '$roomId'" );
 		$result = mysql_query($query) or die('error@取得房間value失敗。');
 		if( mysql_num_rows( $result ) > 0 ){    // 有資料
@@ -95,7 +98,6 @@ switch ($_POST['action']) {
 				$up_value = $a['value'];
 			}
 		}
-
 		$query = sprintf( "UPDATE `rooms` SET ini_value = '$up_value' WHERE key1 = '$roomId'" );
 		$result = mysql_query($query);
 		if( !$result ){
@@ -103,19 +105,43 @@ switch ($_POST['action']) {
 			die($message);
 		}
 		echo 'success@@'.$roomCode;
-			break;
-////////////////////////////////////////////////////////////////
+		break;
+
 	case 'getroomvalue':
 		$roomId = $_POST['roomId'];
 
 		$query = sprintf( "SELECT value FROM `rooms` WHERE key1 = '$roomId'" );
-		$result = mysql_query($query) or die('error@取得房間value失敗。');
+		$result = mysql_query($query) or die('error@取得房間資訊失敗。');
 		if( mysql_num_rows( $result ) > 0 ){    // 有資料
 			while( $a = mysql_fetch_array($result) ){
 				$ary = unserialize($a['value']);
 			}
 		}
 		echo 'success@@'.json_encode( (object)$ary );
+		break;
+		
+	case 'setmessages':
+		$roomId = $_POST['roomId'];
+		echo "string";
+		$messages = json_decode($_POST['messages']);
+		echo "$messages";
+		$query = sprintf( "SELECT value FROM `rooms` WHERE key1 = '$roomId'" );
+		$result = mysql_query($query) or die('error@取得房間資訊失敗。');
+		if( mysql_num_rows( $result ) > 0 ){    // 有資料
+			while( $a = mysql_fetch_array($result) ){
+				$ary = unserialize($a['value']);
+			}
+		}
+		//刷新目前messages
+		$ary['messages'] = $messages;
+		$ary = serialize($ary);
+
+		$query = sprintf( "UPDATE `rooms` SET value = '$ary' WHERE key1 = '$roomId'" );
+		$result = mysql_query($query);
+		if( !$result ){
+			$message  = 'error@更新新房間messages失敗。';
+			die($message);
+		}
 		break;
 	}
 ?>

@@ -21,6 +21,7 @@
 				o_tInfo.roomId = _GET['room_id'];
 				o_tInfo.roomCode = _GET['code'];
 				o_tInfo.online_s = 0;
+				o_tInfo.messages = null;
 				localStorage.setItem('tInfo', JSON.stringify(o_tInfo));
 			}
 			// localStorage 有值，且跟 GET 參數相符合，則不用重新建立 Teacher 資訊
