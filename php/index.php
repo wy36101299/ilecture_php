@@ -135,7 +135,6 @@ switch ($_POST['action']) {
 		//刷新目前messages
 		$ary['messages'] = $messages;
 		$ary = serialize($ary);
-
 		$query = sprintf( "UPDATE `rooms` SET value = '$ary' WHERE key1 = '$roomId'" );
 		$result = mysql_query($query);
 		if( !$result ){

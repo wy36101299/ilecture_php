@@ -41,7 +41,8 @@ function bindRoom(tInfo){
 			}else if( msg[0].trim() === 'speed' ){  // Key 更新 : Speed
 				setSpeedInfo( $('#pieChart'), JSON.parse( msg[1] ).speed );
 			}else if( msg[0].trim() === 'question' ){  // Key 更新 : 某個 Question
-				var tInfo = JSON.parse(localStorage.tInfo), qId = tInfo.qAry.shift();
+				console.log('更新')
+				var tInfo = JSON.parse(localStorage.tInfo), qId = tInfo.qAry;
 				if( JSON.parse( msg[1] ).question === qId ){  // 取得投票的結果
 					var o_ques = JSON.parse( msg[1] )[qId], answerAry = o_ques.answer.sort(), resultAry = [], current = null, count = 0;
 					for( var i=0, iLen=o_ques.num; i<=iLen; i++ ){
@@ -78,14 +79,13 @@ function bindRoom(tInfo){
 	});
 }
 function bindmessages(){
-	var roomId = JSON.parse(localStorage.getItem('tInfo')).roomId
+	var tInfo = JSON.parse(localStorage.getItem('tInfo'));
 	$.ajax({  
 		url: '../php/index.php',
-		data:{'action': 'getroomvalue','roomId':roomId},
+		data:{'action': 'getroomvalue','roomId':tInfo['roomId']},
 		type: 'POST',
 		dataType: 'html',
 		success: function(msg){
-			var tInfo = JSON.parse(localStorage.getItem('tInfo'));
 			msg = msg.split('@@');
 				// Key 更新 : Messages
 			var message = JSON.parse( msg[1] ).messages;
@@ -243,22 +243,9 @@ function createQuestion(e, tInfo){
 		count: 0,
 		answer : []
 	}, qId = 'q_'+timestamp.get().num;
-	tInfo.qAry = [];
-	tInfo.qAry.unshift( qId );
+	tInfo.qAry = qId;
 	localStorage.setItem('tInfo', JSON.stringify(tInfo));
-	$.ajax({  
-		url: '../php/teacher_db.php',
-		data:{'action': 'createQuestion','roomId':tInfo['roomId'],'qId':qId,'o_ques':JSON.stringify(o_ques)},
-		type: 'POST',
-		dataType: 'html',
-		success: function(msg){
-			console.log(msg);
-		},
-		error:function(xhr, ajaxOptions, thrownError){ 
-			console.log(xhr.status); 
-			console.log(thrownError);
-		}
-	});	
+	$.post( "../php/teacher_db.php", {'action': 'createQuestion','roomId':tInfo['roomId'],'qId':qId,'o_ques':JSON.stringify(o_ques) } );	
 }
 
 // 老師回覆 : 送出 Text
@@ -302,7 +289,7 @@ function sendText(e, tInfo, text){
 
 // 取得投票的結果
 function getResult(tInfo){
-	qId = tInfo.qAry.shift();
+	qId = tInfo.qAry;
 	$.ajax({  
 		url: '../php/index.php',
 		data:{'action': 'getroomvalue','roomId':tInfo['roomId']},

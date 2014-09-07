@@ -1,37 +1,12 @@
 //開始監聽 FireBase上 該房間的資訊
 function bindRoom(sInfo){
-	$.ajax({  
-		url: '../php/student_db.php',
-		data:{'action': 'st_bindRoom','roomId':sInfo['roomId']},
-		type: 'POST',
-		dataType: 'html',
-		success: function(msg){
-			console.log('st binding')
-			msg = msg.split('@@');
-			if( msg[0].trim() === 'question' ){ // Teacher 有提出問題
-				var qId = JSON.parse( msg[1] ).question;
-				sInfo.qAry = [];
-				sInfo.qAry.unshift(qId);
-				localStorage.setItem('sInfo', JSON.stringify(sInfo));
-				showVote( JSON.parse( msg[1] )[qId] );
-			}
-			bindmessages();
-		},
-		error:function(xhr, ajaxOptions, thrownError){ 
-			console.log(xhr.status); 
-			console.log(thrownError);
-		}
-	});
-}
-function bindmessages(){
-	var roomId = JSON.parse(localStorage.getItem('sInfo')).roomId
+	var sInfo = JSON.parse(localStorage.getItem('sInfo'));
 	$.ajax({  
 		url: '../php/index.php',
-		data:{'action': 'getroomvalue','roomId':roomId},
+		data:{'action': 'getroomvalue','roomId':sInfo['roomId']},
 		type: 'POST',
 		dataType: 'html',
 		success: function(msg){
-			var sInfo = JSON.parse(localStorage.getItem('sInfo'));
 			msg = msg.split('@@');
 			// Key 更新 : Messages
 			var message = JSON.parse( msg[1] ).messages;
@@ -45,6 +20,16 @@ function bindmessages(){
 				sInfo.messages = message;
 				localStorage.setItem('sInfo', JSON.stringify(sInfo));
 			};	
+			// Teacher 有提出問題
+			var qId = JSON.parse( msg[1] ).question;
+			var localqId = sInfo.qAry;
+			console.log(qId)
+			console.log(localqId)
+			if ( JSON.stringify(qId) != JSON.stringify(localqId)) {
+				sInfo.qAry = qId;
+				localStorage.setItem('sInfo', JSON.stringify(sInfo));
+				showVote( JSON.parse( msg[1] )[qId] );
+			};
 		},
 		error:function(xhr, ajaxOptions, thrownError){ 
 			console.log(xhr.status); 
@@ -54,7 +39,7 @@ function bindmessages(){
 }
 // 取得投票結果
 function getVoteResults(e, sInfo){
-	sId = sInfo.sId, qId = sInfo.qAry[0] || null;
+	sId = sInfo.sId, qId = sInfo.qAry || null;
 	$.ajax({  
 		url: '../php/index.php',
 		data:{'action': 'getroomvalue','roomId':sInfo['roomId']},
@@ -202,19 +187,7 @@ function sendMood(e, sInfo){
 					msg = msg.split('@@');
 					var scores = parseInt(JSON.parse( msg[1] ).mood.split('_')[0]) - oldScores + nowScores, times = parseInt(msg[1].split('_')[1]) + newTimes;
 					scores = scores+'_'+times;
-					$.ajax({  
-						url: '../php/student_db.php',
-						data:{'action': 'updateMood','roomId':sInfo['roomId'],'score':scores},
-						type: 'POST',
-						dataType: 'html',
-						success: function(msg){
-						},
-						error:function(xhr, ajaxOptions, thrownError){ 
-							console.log(xhr.status); 
-							console.log(thrownError);
-						}
-					});
-
+					$.post( "../php/student_db.php", {'action': 'updateMood','roomId':sInfo['roomId'],'score':scores});
 				},
 				error:function(xhr, ajaxOptions, thrownError){ 
 					console.log(xhr.status); 
@@ -285,19 +258,7 @@ function sendSpeed(e, sInfo){
 					msg = msg.split('@@');
 					var scores = parseInt(JSON.parse( msg[1] ).speed.split('_')[0]) - oldScores + nowScores, times = parseInt(msg[1].split('_')[1]) + newTimes;
 					scores = scores+'_'+times;
-					$.ajax({  
-						url: '../php/student_db.php',
-						data:{'action': 'updateSpeed','roomId':sInfo['roomId'],'score':scores},
-						type: 'POST',
-						dataType: 'html',
-						success: function(msg){
-						},
-						error:function(xhr, ajaxOptions, thrownError){ 
-							console.log(xhr.status); 
-							console.log(thrownError);
-						}
-					});
-
+					$.post( "../php/student_db.php", {'action': 'updateSpeed','roomId':sInfo['roomId'],'score':scores});
 				},
 				error:function(xhr, ajaxOptions, thrownError){ 
 					console.log(xhr.status); 
@@ -395,7 +356,7 @@ function sentAnswer(answerAry, sInfo){
 				console.log(o_ques);
 			$.ajax({  
 				url: '../php/student_db.php',
-				data:{'action': 'sentAnswer','roomId':sInfo['roomId'],'qId':sInfo.qAry.shift(),'answer':JSON.stringify(o_ques)},
+				data:{'action': 'sentAnswer','roomId':sInfo['roomId'],'qId':sInfo.qAry,'answer':JSON.stringify(o_ques)},
 				type: 'POST',
 				dataType: 'html',
 				success: function(msg){

@@ -106,7 +106,7 @@ switch ($_POST['action']) {
 				echo "online_s@@22online@@".json_encode( (object)$ini_value['online_s'] ).'@@'.json_encode( (object)$up_value['online_s'] );
 			}
 			// Key 更新 : 某個 Question
-			elseif ($ini_value[$qid] !== $up_value[$qid]) {
+			elseif (serialize($ini_value[$qid]) !== serialize($up_value[$qid])) {
 				echo "question@@".json_encode( (object)$up_value );
 			}
 		}

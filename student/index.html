@@ -24,7 +24,7 @@
 				o_sInfo.sId = 's_'+randomInt(1, 100);
 				o_sInfo.roomId = _GET['room_id'];
 				o_sInfo.roomCode = _GET['code'];
-				o_sInfo.qAry = [];
+				o_sInfo.qAry = null;
 				o_sInfo.params = 'room_id='+_GET['room_id']+'&code='+_GET['code'];
 				o_sInfo.messages = null;
 				localStorage.setItem('sInfo', JSON.stringify(o_sInfo));

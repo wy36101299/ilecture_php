@@ -94,33 +94,5 @@ switch ($_POST['action']) {
 			die($message);
 		}
 		break;
-		
-	case 'st_bindRoom':
-		$roomId = $_POST['roomId'];
-
-		$query = sprintf( "SELECT value,ini_value FROM `rooms` WHERE key1 = '$roomId'" );
-		$result = mysql_query($query) or die('error@取得房間value失敗。');
-		if( mysql_num_rows( $result ) > 0 ){    // 有資料
-			while( $a = mysql_fetch_array($result) ){
-				$up_value = unserialize($a['value']);
-				$ini_value = unserialize($a['ini_value']);
-			}
-		}
-		if ($ini_value !== $up_value) {
-			// 刷新 ini_value
-			$aa = serialize($up_value);
-			$query = sprintf( "UPDATE `rooms` SET ini_value = '$aa' WHERE key1 = '$roomId'" );
-			$result = mysql_query($query);
-			if( !$result ){
-				$message  = 'error@刷新ini_value失敗。';
-				die($message);
-			}
-			// Teacher 有提出問題
-			if ( $ini_value['question'] !== $up_value['question'] ) {
-				echo "question@@".json_encode( (object)$up_value );
-			}
-		}
-
-		break;
 	}
 ?>
