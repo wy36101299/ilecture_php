@@ -141,7 +141,7 @@ switch ($_POST['action']) {
 			$message  = 'error@更新新房間messages失敗。';
 			die($message);
 		}
-		echo 'success@@'.$messages;
+		echo 'success@@'.$result;
 		break;
 	}
 ?>

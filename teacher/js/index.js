@@ -3,7 +3,7 @@ $(function(){
 	initPieChart(getUrlVars()['room_id'], viewport.get());
 	
 	// 轉換 Student 網址成短網址並生成 QR-Code
-	getTinyURL('http://localhost/~wy/git_project/iLecture/student/index.html?room_id='+getUrlVars()['room_id']+'&code='+getUrlVars()['code'], getUrlVars()['code']);
+	getTinyURL('http://localhost/~wy/git_project/ilecture_php/student/index.html?room_id='+getUrlVars()['room_id']+'&code='+getUrlVars()['code'], getUrlVars()['code']);
 });
 
 

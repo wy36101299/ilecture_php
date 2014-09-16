@@ -23,6 +23,7 @@ switch ($_POST['action']) {
 			$message  = 'error@更新新房間資訊失敗。';
 			die($message);
 		}
+		echo 'success@@'.$result;
 		break;
 
 	case 'updateSpeed':
@@ -46,6 +47,7 @@ switch ($_POST['action']) {
 			$message  = 'error@更新新房間資訊失敗。';
 			die($message);
 		}
+		echo 'success@@'.$result;
 		break;
 
 	case 'updateState':
@@ -93,7 +95,7 @@ switch ($_POST['action']) {
 			$message  = 'error@更新新房間messages失敗。';
 			die($message);
 		}
-		echo echo 'success@@'.$answer;
+		echo 'success@@'.$answer;
 		break;
 	}
 ?>
