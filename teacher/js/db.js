@@ -41,6 +41,7 @@ function bindRoom(tInfo){
 		dataType: 'html',
 		success: function(msg){
 			msg = msg.split('@@');
+			console.log('bindRoom')
 			if( msg[0].trim() === 'mood' ){  // Key 更新 : Mood
 				setMoodInfo( $('#roomInfo nav'), JSON.parse( msg[1] ).mood );
 			}else if( msg[0].trim() === 'speed' ){  // Key 更新 : Speed
@@ -52,7 +53,7 @@ function bindRoom(tInfo){
 				if( JSON.parse( msg[1] ).question === qId ){  // 取得投票的結果
 					console.log( JSON.parse( msg[1] )[qId] );
 					localStorage.setItem('tlatestQuesInfo', JSON.parse( msg[1] )[qId] );
-					setResult( JSON.parse( msg[1] )[qId] );
+					setResult( JSON.stringify(JSON.parse( msg[1] )[qId]) );
 				}
 			}else if( msg[0].trim() === 'online_s' ){  // Key 更新 : online_s
 				updateOnline_s();
@@ -148,7 +149,7 @@ function getLatestQuestion(tInfo){
 			if( JSON.parse( msg[1] ).question !== null ){ // 這間 room -> 曾經發問過問題
 					qId = tInfo.qAry[0];
 					localStorage.setItem('tlatestQuesInfo', JSON.parse( msg[1] )[qId]);
-					setResult( JSON.parse( msg[1] )[qId] );
+					setResult( JSON.stringify(JSON.parse( msg[1] )[qId]) );
 					$('#roomResult').removeClass('null');
 					initIsCompleted();
 			}else{

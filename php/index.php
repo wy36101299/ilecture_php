@@ -82,7 +82,7 @@ switch ($_POST['action']) {
 			die($message);
 		}
 		//建立新房間資訊
-		$a=array('sName'=>0,"roomCode"=>$roomCode,"auth"=>$authNumber,"mood"=>"0_0","speed"=>"0_0","messages"=>null,"question"=>null,"online_s"=>null);
+		$a=array('sName'=>0,"roomCode"=>$roomCode,"auth"=>$authNumber,"mood"=>"0_0","speed"=>"0_0","messages"=>array(),"question"=>null,"online_s"=>array());
 		$value=serialize($a);
 		$query = sprintf( "INSERT INTO `rooms` (key1, value) VALUES ('%s', '%s')", mysql_real_escape_string($roomId), mysql_real_escape_string($value) );
 		$result = mysql_query($query);
@@ -122,9 +122,8 @@ switch ($_POST['action']) {
 		
 	case 'setmessages':
 		$roomId = $_POST['roomId'];
-		echo "string";
 		$messages = json_decode($_POST['messages']);
-		echo "$messages";
+		
 		$query = sprintf( "SELECT value FROM `rooms` WHERE key1 = '$roomId'" );
 		$result = mysql_query($query) or die('error@取得房間資訊失敗。');
 		if( mysql_num_rows( $result ) > 0 ){    // 有資料
@@ -141,6 +140,7 @@ switch ($_POST['action']) {
 			$message  = 'error@更新新房間messages失敗。';
 			die($message);
 		}
+		// $result is decide Synchronization success or failed
 		echo 'success@@'.$result;
 		break;
 	}

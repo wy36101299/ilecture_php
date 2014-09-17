@@ -43,7 +43,7 @@ function bindRoom(sInfo){
 			// Key 更新 : Messages
 			var message = JSON.parse( msg[1] ).messages;
 			var localMessage = sInfo.messages;
-			if ( JSON.stringify(message) !== JSON.stringify(localMessage)) {
+			if ( JSON.stringify(message) !== JSON.stringify(localMessage) ) {
 				if( message[0]['teacher'] ){
 					var $a = $('#show-message');
 					if( $a.children('div.item:last-child').find('span.timestamp').text() ){ // 若 Messages 不為空
@@ -63,8 +63,8 @@ function bindRoom(sInfo){
 			};	
 			// Teacher 有提出問題
 			var qId = JSON.parse( msg[1] ).question;
-			var localqId = sInfo.qAry;
-			if ( JSON.stringify(qId) != JSON.stringify(localqId)) {
+			var localqId = sInfo.question;
+			if ( JSON.stringify(qId) != JSON.stringify(localqId) ) {
 				sInfo.question = qId;
 				localStorage.setItem('sInfo', JSON.stringify(sInfo));
 				$.ajax({  
@@ -75,8 +75,13 @@ function bindRoom(sInfo){
 					success: function(msg){
 						msg = msg.split('@@');
 						localStorage.setItem('slatestQuesInfo',JSON.parse( msg[1] )[qId]);
-						setQuestion(JSON.parse( msg[1] )[qId]);
-						setResult(JSON.parse( msg[1] )[qId]);
+						console.log('// 開始監聽 FireBase上 該房間的資訊')
+						console.log(msg)
+						console.log(JSON.parse( msg[1] ))
+						console.log(qId)
+						// match index.js data format
+						setQuestion(JSON.stringify(JSON.parse( msg[1] )[qId]));
+						setResult(JSON.stringify(JSON.parse( msg[1] )[qId]));
 						// 顯示 #roomQues 頁面
 						$('#navigation').find('div.item.active').removeClass('active').end().find('[_nav=roomQues]').addClass('active');
 						$('#container').children('section.active').removeClass('active').end().children('#roomQues').addClass('active');
@@ -87,6 +92,16 @@ function bindRoom(sInfo){
 					}
 				});					
 			};
+			// // Key 更新 : 某個 Question
+			// var o_ques = JSON.parse( msg[1] )[qId];
+			// var localO_ques = localStorage.getItem('slatestQuesInfo')
+			// console.log(o_ques)
+			// console.log(localO_ques)
+			// if( JSON.stringify(o_ques) !== localO_ques ){  // 取得投票的結果
+			// 	localStorage.setItem('slatestQuesInfo', JSON.stringify(o_ques));
+			// 	setResult(JSON.stringify(o_ques);
+			// }			
+
 		},
 		error:function(xhr, ajaxOptions, thrownError){ 
 			console.log(xhr.status); 
@@ -122,10 +137,21 @@ function updateState(sInfo){
 				ary = [];
 				ary.push(o_state);
 			}
-			console.log( ary );
-			online_sRef.set(JSON.stringify(ary));
-			initIsCompleted();
-			timeVar = setTimeout(function(){ updateState(JSON.parse(localStorage.sInfo)); }, 1*10*1000);
+			$.ajax({  
+				url: '../php/student_db.php',
+				data:{'action': 'updateState','roomId':sInfo['roomId'],'online_s':JSON.stringify(ary)},
+				type: 'POST',
+				dataType: 'html',
+				success: function(msg){
+					initIsCompleted();
+					// 每「10秒」更新一次
+					timeVar = setTimeout(function(){ updateState(JSON.parse(localStorage.sInfo)); }, 1*10*1000);
+				},
+				error:function(xhr, ajaxOptions, thrownError){ 
+					console.log(xhr.status); 
+					console.log(thrownError);
+				}
+			});			
 		},
 		error:function(xhr, ajaxOptions, thrownError){ 
 			console.log(xhr.status); 
@@ -189,6 +215,7 @@ function sendMood(e, sInfo){
 							success: function(msg){
 								msg = msg.split('@@');
 								var scores = parseInt(JSON.parse( msg[1] ).mood.split('_')[0]) - oldScores + nowScores, times = parseInt(JSON.parse( msg[1] ).mood.split('_')[1]) + newTimes;
+								scores = scores+'_'+times;
 								$.ajax({  
 									url: '../php/student_db.php',
 									data:{'action': 'updateMood','roomId':sInfo['roomId'],'score':scores},
@@ -240,6 +267,7 @@ function sendSpeed(e, sInfo){
 		dataType: 'html',
 		success: function(msg){
 			msg = msg.split('@@');
+			console.log(msg)
 			var ary = JSON.parse( msg[1] ).messages || null, o_send = {}, count = -1, time = timestamp.get().read, oldScores = 0, nowScores = parseInt($(e).attr('_speed')), newTimes = 1;
 					o_send[sInfo['sId']] = 'speed_'+time+'_'+nowScores;
 					if( ary !== null ){
@@ -287,6 +315,7 @@ function sendSpeed(e, sInfo){
 								msg = msg.split('@@');
 								// scores : 學生的 scores 皆不重複，times : 全部學生發送 Speed 的次數
 								var scores = parseInt(JSON.parse( msg[1] ).speed.split('_')[0]) - oldScores + nowScores, times = parseInt(JSON.parse( msg[1] ).speed.split('_')[1]) + newTimes;
+								scores = scores+'_'+times;
 								$.ajax({  
 									url: '../php/student_db.php',
 									data:{'action': 'updateSpeed','roomId':sInfo['roomId'],'score':scores},
@@ -294,11 +323,16 @@ function sendSpeed(e, sInfo){
 									dataType: 'html',
 									success: function(msg){
 										msg = msg.split('@@');
+										console.log('222')
+										console.log(msg)
 										if ( msg[1]==="") {
 											alert('Synchronization failed');
 											$('body').removeClass('blur');
 										}else{
 											$('body').removeClass('blur');
+											console.log(e)
+											console.log(nowScores)
+											console.log(time)
 											addMessage('Speed', e, nowScores, time, sInfo['sId']);
 										}
 									},
@@ -353,7 +387,52 @@ function sendText(e, sInfo, text){
 		});
 	});
 }
-
+// 送出 Text
+function sendText(e, sInfo, text){
+	$('body').addClass('blur');	
+	$.ajax({  
+		url: '../php/index.php',
+		data:{'action': 'getroomvalue','roomId':sInfo['roomId']},
+		type: 'POST',
+		dataType: 'html',
+		success: function(msg){
+			msg = msg.split('@@');
+			var ary = JSON.parse( msg[1] ).messages || null, o_send = {}, time = timestamp.get().read;
+			o_send[sInfo['sId']] = 'text_'+time+'_'+text;
+			if( ary === null ){
+				ary = [];
+				ary.push(o_send);
+			}else{
+				ary.unshift(o_send);
+			}
+			console.log(ary);
+			$.ajax({  
+				url: '../php/index.php',
+				data:{'action': 'setmessages','roomId':sInfo['roomId'],'messages':JSON.stringify(ary)},
+				type: 'POST',
+				dataType: 'html',
+				success: function(msg){
+					msg = msg.split('@@');
+					if (msg[1]==="") {
+						alert('Synchronization failed');
+						$('body').removeClass('blur');
+					}else{
+						$('body').removeClass('blur');
+						addMessage('Text', e, text, time, sInfo['sId']);						
+					}
+				},
+				error:function(xhr, ajaxOptions, thrownError){ 
+					console.log(xhr.status); 
+					console.log(thrownError);
+				}
+			});	
+		},
+		error:function(xhr, ajaxOptions, thrownError){ 
+			console.log(xhr.status); 
+			console.log(thrownError);
+		}
+	});
+}
 // 取得 Message's logs
 function getLog(sInfo){
 	$.ajax({  
@@ -393,7 +472,7 @@ function sentAnswer(e, answerAry, sInfo){
 		success: function(msg){
 			msg = msg.split('@@');
 			var qId = JSON.parse( msg[1] ).question;			
-			var o_ques = JSON.parse(qId), o_answer = {};
+			var o_ques = JSON.parse( msg[1] )[qId], o_answer = {};
 			for( var i=0, iLen=answerAry.length; i<iLen; i++ ){
 				o_ques.answer.push(answerAry[i]);
 			}
@@ -403,12 +482,12 @@ function sentAnswer(e, answerAry, sInfo){
 			var json_ques = JSON.stringify(o_ques);
 			$.ajax({  
 				url: '../php/student_db.php',
-				data:{'action': 'sentAnswer','roomId':sInfo['roomId'],'qId':qId,'answer':JSON.stringify(o_ques)},
+				data:{'action': 'sentAnswer','roomId':sInfo['roomId'],'qId':qId,'answer':json_ques},
 				type: 'POST',
 				dataType: 'html',
 				success: function(msg){
 					msg = msg.split('@@');
-					if ( msg[1]!=="" ) {
+					if ( msg[1]==="" ) {
 						alert('Synchronization failed');
 						$('body').removeClass('blur');
 					}else{
@@ -476,6 +555,10 @@ function sentStudentName(name, sInfo){
 		dataType: 'html',
 		success: function(msg){
 			msg = msg.split('@@');
+			// arg
+			var qId = JSON.parse( msg[1] ).question;
+			var o_ques = JSON.parse( msg[1] )[qId];
+			// 抓取 Messages 的資訊
 			var ary = JSON.parse( msg[1] ).messages || null, tempAry1 = [];
 			console.log(ary);
 			if( ary !== null ){
@@ -496,134 +579,32 @@ function sentStudentName(name, sInfo){
 					dataType: 'html',
 					success: function(msg){
 						msg = msg.split('@@');
-						if ( msg[1] === "") {
+						if ( msg[1]==="" ) {
 							alert('Synchronization failed');
 							$('body').removeClass('blur');
 						}else{
-							$.ajax({  
-								url: '../php/index.php',
-								data:{'action': 'getroomvalue','roomId':sInfo['roomId']},
-								type: 'POST',
-								dataType: 'html',
-								success: function(msg){
-									msg = msg.split('@@');
-									if( JSON.parse( msg[1] ).question !== 'null' ){ // 這間 room -> 曾經發問過問題
-										var qId = JSON.parse( msg[1] ).question;
-										// 抓取最新問題的資訊
-										var ary = JSON.parse( msg[1] )[qId] || null, sAry = ary.s, tempAry2 = [];
-										console.log(ary);
-										if( sAry.length !== 0 ){ // 這位 Student -> 曾經回答過問題
-											for( var i=0, aryLen=sAry.length; i<aryLen; i++ ){
-												if( sAry[i].split('-')[0] === oldId.split('-')[0] ){
-													tempAry2[i] = newId;
-												}else{
-													tempAry2[i] = sAry[i];
-												}
-											}
-											ary.s = tempAry2;
-											console.log(ary);
-											$.ajax({  
-												url: '../php/student_db.php',
-												data:{'action': 'sentAnswer','roomId':sInfo['roomId'],'qId':sInfo,'answer':JSON.stringify(ary)},
-												type: 'POST',
-												dataType: 'html',
-												success: function(msg){
-													msg = msg.split('@@');
-													if ( msg[1]==="") {
-														alert('Synchronization failed');
-														$('body').removeClass('blur');
-													}else{
-														sInfo.sId = newId;
-														localStorage.setItem('sInfo', JSON.stringify(sInfo));
-														// 清除 updateState TimeOut 計數
-														clearTimeout(timeVar);
-														// 更新 online_s 的 sId
-														updateState(sInfo);
-														// 更新 Messages
-														getLog(JSON.parse(localStorage.sInfo));
-														$('#show-sId').text('No.'+newId.split('_')[1]);
-														$('body').removeClass('blur');
-														// 更新 sName，讓 Teacher 得知該學生有更新 Name
-														roomRef.child('sName').set(timestamp.get().num);
-														$('#show-sId').parent('nav.user').removeClass('active').siblings('.active').removeClass('active').end().siblings('footer').attr('_now', 'none').children('div').removeClass('active');
-													}
-												},
-												error:function(xhr, ajaxOptions, thrownError){ 
-													console.log(xhr.status); 
-													console.log(thrownError);
-												}
-											});	
-											roomRef.child(data2.val()).set(JSON.stringify(ary), function(error){
-												if(error){
-													alert('Synchronization failed');
-													$('body').removeClass('blur');
-												}else{
-													sInfo.sId = newId;
-													localStorage.setItem('sInfo', JSON.stringify(sInfo));
-													// 清除 updateState TimeOut 計數
-													clearTimeout(timeVar);
-													// 更新 online_s 的 sId
-													updateState(sInfo);
-													// 更新 Messages
-													getLog(JSON.parse(localStorage.sInfo));
-													$('#show-sId').text('No.'+newId.split('_')[1]);
-													$('body').removeClass('blur');
-													// 更新 sName，讓 Teacher 得知該學生有更新 Name
-													roomRef.child('sName').set(timestamp.get().num);
-													$('#show-sId').parent('nav.user').removeClass('active').siblings('.active').removeClass('active').end().siblings('footer').attr('_now', 'none').children('div').removeClass('active');
-												}
-											});
+							if( qId !== null ){ // 這間 room -> 曾經發問過問題
+								// 抓取最新問題的資訊
+								var ary = o_ques || null, sAry = ary.s, tempAry2 = [];
+								console.log(ary);
+								if( sAry.length !== 0 ){ // 這位 Student -> 曾經回答過問題
+									for( var i=0, aryLen=sAry.length; i<aryLen; i++ ){
+										if( sAry[i].split('-')[0] === oldId.split('-')[0] ){
+											tempAry2[i] = newId;
+										}else{
+											tempAry2[i] = sAry[i];
 										}
-									}else{ // 這間 room -> 從未發問過問題
-										sInfo.sId = newId;
-										localStorage.setItem('sInfo', JSON.stringify(sInfo));
-										// 清除 updateState TimeOut 計數
-										clearTimeout(timeVar);
-										// 更新 online_s 的 sId
-										updateState(sInfo);
-										// 更新 Messages
-										getLog(JSON.parse(localStorage.sInfo));
-										$('#show-sId').text('No.'+newId.split('_')[1]);
-										$('body').removeClass('blur');
-										// 更新 sName，讓 Teacher 得知該學生有更新 Name
-										roomRef.child('sName').set(timestamp.get().num);
-										$('#show-sId').parent('nav.user').removeClass('active').siblings('.active').removeClass('active').end().siblings('footer').attr('_now', 'none').children('div').removeClass('active');
-									}		
-								},
-								error:function(xhr, ajaxOptions, thrownError){ 
-									console.log(xhr.status); 
-									console.log(thrownError);
-								}
-							});	
-						}
-					},
-					error:function(xhr, ajaxOptions, thrownError){ 
-						console.log(xhr.status); 
-						console.log(thrownError);
-					}
-				});	
-				roomRef.child('messages').set(JSON.stringify(tempAry1), function(error){
-					if(error){
-						alert('Synchronization failed');
-						$('body').removeClass('blur');
-					}else{
-						roomRef.child('question').once('value', function(data2){ // 抓取最新問題的 qId
-							if( data2.val() !== 'null' ){ // 這間 room -> 曾經發問過問題
-								roomRef.child(data2.val()).once('value', function(data4){ // 抓取最新問題的資訊
-									var ary = JSON.parse(data4.val()) || null, sAry = ary.s, tempAry2 = [];
+									}
+									ary.s = tempAry2;
 									console.log(ary);
-									if( sAry.length !== 0 ){ // 這位 Student -> 曾經回答過問題
-										for( var i=0, aryLen=sAry.length; i<aryLen; i++ ){
-											if( sAry[i].split('-')[0] === oldId.split('-')[0] ){
-												tempAry2[i] = newId;
-											}else{
-												tempAry2[i] = sAry[i];
-											}
-										}
-										ary.s = tempAry2;
-										console.log(ary);
-										roomRef.child(data2.val()).set(JSON.stringify(ary), function(error){
-											if(error){
+									$.ajax({  
+										url: '../php/index.php',
+										data:{'action': 'setmessages','roomId':sInfo['roomId'],'messages':JSON.stringify(ary)},
+										type: 'POST',
+										dataType: 'html',
+										success: function(msg){
+											msg = msg.split('@@');	
+											if ( msg[1]==="" ) {
 												alert('Synchronization failed');
 												$('body').removeClass('blur');
 											}else{
@@ -638,12 +619,16 @@ function sentStudentName(name, sInfo){
 												$('#show-sId').text('No.'+newId.split('_')[1]);
 												$('body').removeClass('blur');
 												// 更新 sName，讓 Teacher 得知該學生有更新 Name
-												roomRef.child('sName').set(timestamp.get().num);
+												$.post( '../php/teacher_db.php', {'action': 'updatesName','roomId':sInfo['roomId'],'updateTime':timestamp.get().num} );											
 												$('#show-sId').parent('nav.user').removeClass('active').siblings('.active').removeClass('active').end().siblings('footer').attr('_now', 'none').children('div').removeClass('active');
-											}
-										});
-									}
-								});
+											}										
+										},
+										error:function(xhr, ajaxOptions, thrownError){ 
+											console.log(xhr.status); 
+											console.log(thrownError);
+										}
+									});
+								}										
 							}else{ // 這間 room -> 從未發問過問題
 								sInfo.sId = newId;
 								localStorage.setItem('sInfo', JSON.stringify(sInfo));
@@ -656,99 +641,25 @@ function sentStudentName(name, sInfo){
 								$('#show-sId').text('No.'+newId.split('_')[1]);
 								$('body').removeClass('blur');
 								// 更新 sName，讓 Teacher 得知該學生有更新 Name
-								roomRef.child('sName').set(timestamp.get().num);
+								$.post( '../php/teacher_db.php', {'action': 'updatesName','roomId':sInfo['roomId'],'updateTime':timestamp.get().num} );											
 								$('#show-sId').parent('nav.user').removeClass('active').siblings('.active').removeClass('active').end().siblings('footer').attr('_now', 'none').children('div').removeClass('active');
 							}
-						});
+						}
+					},
+					error:function(xhr, ajaxOptions, thrownError){ 
+						console.log(xhr.status); 
+						console.log(thrownError);
 					}
-				});
+				});	
 			}
-
 		},
 		error:function(xhr, ajaxOptions, thrownError){ 
 			console.log(xhr.status); 
 			console.log(thrownError);
 		}
-	});	
-
-	var roomRef = myRootRef.child('rooms').child(sInfo['roomId']), oldId = sInfo['sId'], newId = ( name === null ) ? sInfo['sId'].split('-')[0] : sInfo['sId'].split('-')[0]+'-'+name;
-	roomRef.child('messages').once('value', function(data1){ // 抓取 Messages 的資訊
-		var ary = JSON.parse(data1.val()) || null, tempAry1 = [];
-		console.log(ary);
-		if( ary !== null ){
-			for( var i=0, aryLen=ary.length; i<aryLen; i++ ){
-				if( Object.keys(ary[i])[0].split('-')[0] === oldId.split('-')[0] ){
-					var temp_o = {};
-					temp_o[newId] = ary[i][oldId];
-					tempAry1[i] = temp_o;
-				}else{
-					tempAry1[i] = ary[i];
-				}
-			}
-			console.log(tempAry1);
-			roomRef.child('messages').set(JSON.stringify(tempAry1), function(error){
-				if(error){
-					alert('Synchronization failed');
-					$('body').removeClass('blur');
-				}else{
-					roomRef.child('question').once('value', function(data2){ // 抓取最新問題的 qId
-						if( data2.val() !== 'null' ){ // 這間 room -> 曾經發問過問題
-							roomRef.child(data2.val()).once('value', function(data4){ // 抓取最新問題的資訊
-								var ary = JSON.parse(data4.val()) || null, sAry = ary.s, tempAry2 = [];
-								console.log(ary);
-								if( sAry.length !== 0 ){ // 這位 Student -> 曾經回答過問題
-									for( var i=0, aryLen=sAry.length; i<aryLen; i++ ){
-										if( sAry[i].split('-')[0] === oldId.split('-')[0] ){
-											tempAry2[i] = newId;
-										}else{
-											tempAry2[i] = sAry[i];
-										}
-									}
-									ary.s = tempAry2;
-									console.log(ary);
-									roomRef.child(data2.val()).set(JSON.stringify(ary), function(error){
-										if(error){
-											alert('Synchronization failed');
-											$('body').removeClass('blur');
-										}else{
-											sInfo.sId = newId;
-											localStorage.setItem('sInfo', JSON.stringify(sInfo));
-											// 清除 updateState TimeOut 計數
-											clearTimeout(timeVar);
-											// 更新 online_s 的 sId
-											updateState(sInfo);
-											// 更新 Messages
-											getLog(JSON.parse(localStorage.sInfo));
-											$('#show-sId').text('No.'+newId.split('_')[1]);
-											$('body').removeClass('blur');
-											// 更新 sName，讓 Teacher 得知該學生有更新 Name
-											roomRef.child('sName').set(timestamp.get().num);
-											$('#show-sId').parent('nav.user').removeClass('active').siblings('.active').removeClass('active').end().siblings('footer').attr('_now', 'none').children('div').removeClass('active');
-										}
-									});
-								}
-							});
-						}else{ // 這間 room -> 從未發問過問題
-							sInfo.sId = newId;
-							localStorage.setItem('sInfo', JSON.stringify(sInfo));
-							// 清除 updateState TimeOut 計數
-							clearTimeout(timeVar);
-							// 更新 online_s 的 sId
-							updateState(sInfo);
-							// 更新 Messages
-							getLog(JSON.parse(localStorage.sInfo));
-							$('#show-sId').text('No.'+newId.split('_')[1]);
-							$('body').removeClass('blur');
-							// 更新 sName，讓 Teacher 得知該學生有更新 Name
-							roomRef.child('sName').set(timestamp.get().num);
-							$('#show-sId').parent('nav.user').removeClass('active').siblings('.active').removeClass('active').end().siblings('footer').attr('_now', 'none').children('div').removeClass('active');
-						}
-					});
-				}
-			});
-		}
-	});
+	});		
 }
+
 
 // 初始化 DB 的一些資訊
 function init(sInfo){
@@ -777,8 +688,9 @@ function getLatestQuestion(sInfo){
 					var qId = JSON.parse( msg[1] ).question
 					console.log(JSON.parse( msg[1] )[qId]);
 					localStorage.setItem('slatestQuesInfo', JSON.parse( msg[1] )[qId]);
-					setQuestion(JSON.parse( msg[1] )[qId]);
-					setResult(JSON.parse( msg[1] )[qId]);
+					console.log('抓取「最新的問題」')
+					setQuestion(JSON.stringify(JSON.parse( msg[1] )[qId]));
+					setResult(JSON.stringify(JSON.parse( msg[1] )[qId]));
 					$('#roomResult, #roomQues').removeClass('null');
 					initIsCompleted();
 			}else{

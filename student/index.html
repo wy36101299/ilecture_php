@@ -188,6 +188,7 @@
 				o_sInfo.roomCode = roomCode;
 				o_sInfo.question = 'null';
 				o_sInfo.params = 'room_id='+roomId+'&code='+roomCode;
+				o_sInfo.messages = [];
 				localStorage.setItem('sInfo', JSON.stringify(o_sInfo));
 				setStudentId(o_sInfo, 1);
 			}else{ // localStorage 有值，且跟 GET 參數相符合，則不用重新建立 Student 資訊

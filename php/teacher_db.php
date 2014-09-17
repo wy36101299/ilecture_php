@@ -76,7 +76,6 @@ switch ($_POST['action']) {
 		break;
 
 	case 'tea_bindRoom':
-
 		$roomId = $_POST['roomId'];
 		$query = sprintf( "SELECT value,ini_value FROM `rooms` WHERE key1 = '$roomId'" );
 		$result = mysql_query($query) or die('error@取得房間value失敗。');
@@ -107,8 +106,7 @@ switch ($_POST['action']) {
 				echo "messages@@".json_encode( (object)$up_value );
 			// Key 更新 : online_s
 			}elseif (serialize($ini_value['online_s']) !== serialize($up_value['online_s'])) {
-				// echo "online_s@@".json_encode( (object)$up_value );
-				echo "online_s".json_encode( (object)$up_value );
+				echo "online_s@@".json_encode( (object)$up_value );
 			// Key 更新 : sName
 			}elseif ($ini_value['sName'] !== $up_value['sName']) {
 				echo "sName@@".json_encode( (object)$up_value );
@@ -117,6 +115,29 @@ switch ($_POST['action']) {
 			elseif (serialize($ini_value[$qid]) !== serialize($up_value[$qid])) {
 				echo "question@@".json_encode( (object)$up_value );
 			}
+		}
+		echo '@@@'.$ini_value['sName'].$up_value['sName'];
+		break;
+
+	case 'updatesName':
+		$roomId = $_POST['roomId'];
+		$updateTime = $_POST['updateTime'];
+		
+		$query = sprintf( "SELECT value FROM `rooms` WHERE key1 = '$roomId'" );
+		$result = mysql_query($query) or die('error@取得房間資訊失敗。');
+		if( mysql_num_rows( $result ) > 0 ){    // 有資料
+			while( $a = mysql_fetch_array($result) ){
+				$ary = unserialize($a['value']);
+			}
+		}
+		//刷新目前sName
+		$ary['sName'] = $updateTime;
+		$ary = serialize($ary);
+		$query = sprintf( "UPDATE `rooms` SET value = '$ary' WHERE key1 = '$roomId'" );
+		$result = mysql_query($query);
+		if( !$result ){
+			$message  = 'error@更新新房間sName失敗。';
+			die($message);
 		}
 		break;
 	}

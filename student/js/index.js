@@ -185,6 +185,7 @@ function showLogs(sLog, sInfo){
 
 // 顯示 : 選擇問題答案介面
 function setQuestion(json_ques){
+	console.log(json_ques)
 	var o_ques = JSON.parse(json_ques), type = ( o_ques.type === 'single' ) ? '單選' : '多選', title = ( o_ques.title === '' ) ? '未設定問題描述' : o_ques.title;
 	console.log(o_ques.s);
 	console.log(checkArrayByIndex(o_ques.s, JSON.parse(localStorage.sInfo).sId));

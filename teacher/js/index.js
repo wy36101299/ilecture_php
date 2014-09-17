@@ -150,9 +150,7 @@ function setPieChart($pieChart, _){
 function addMessages(tInfo, tLog){
 	var sId = Object.keys(tLog[0])[0], $a = $('#show-message');
 	if( $a.children('div.item:last-child').find('span.timestamp').text() ){ // 若 Messages 不為空
-		console.log( compareDateTime($a.children('div.item:last-child').find('span.timestamp').text(), tLog[0][sId].split('_')[1]) );
 		if( !compareDateTime($a.children('div.item:last-child').find('span.timestamp').text(), tLog[0][sId].split('_')[1]) ){ // 若 new message 沒比較新，則不動作
-			console.log('addMessages 不動作');
 			return 0;
 		}
 	}
