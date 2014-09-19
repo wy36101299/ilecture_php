@@ -92,16 +92,19 @@ function bindRoom(sInfo){
 					}
 				});					
 			};
-			// // Key 更新 : 某個 Question
-			// var o_ques = JSON.parse( msg[1] )[qId];
-			// var localO_ques = localStorage.getItem('slatestQuesInfo')
-			// console.log(o_ques)
-			// console.log(localO_ques)
-			// if( JSON.stringify(o_ques) !== localO_ques ){  // 取得投票的結果
-			// 	localStorage.setItem('slatestQuesInfo', JSON.stringify(o_ques));
-			// 	setResult(JSON.stringify(o_ques);
-			// }			
-
+			// Key 更新 : 某個 Question
+			console.log(qId)
+			if (qId !== null) {
+				console.log('123')
+				var o_ques = JSON.parse( msg[1] )[qId];
+				var localO_ques = localStorage.getItem('slatestQuesInfo')
+				console.log(o_ques)
+				console.log(localO_ques)
+				if( JSON.stringify(o_ques) !== localO_ques ){  // 取得投票的結果
+					localStorage.setItem('slatestQuesInfo', JSON.stringify(o_ques));
+					setResult(JSON.stringify(o_ques));
+				}							
+			}
 		},
 		error:function(xhr, ajaxOptions, thrownError){ 
 			console.log(xhr.status); 

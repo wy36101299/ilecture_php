@@ -102,21 +102,21 @@ switch ($_POST['action']) {
 			}elseif ($ini_value['speed'] !== $up_value['speed']) {
 				echo "speed@@".json_encode( (object)$up_value );
 			// Key 更新 : messages
-			}elseif ($ini_value['messages'] !== $up_value['messages']) {
+			}elseif (serialize($ini_value['messages']) !== serialize($up_value['messages'])) {
+				// Key 更新 : sName
+				if ($ini_value['sName'] !== $up_value['sName']) {
+					echo "sName@@";
+					break;
+				}
 				echo "messages@@".json_encode( (object)$up_value );
 			// Key 更新 : online_s
 			}elseif (serialize($ini_value['online_s']) !== serialize($up_value['online_s'])) {
-				echo "online_s@@".json_encode( (object)$up_value );
-			// Key 更新 : sName
-			}elseif ($ini_value['sName'] !== $up_value['sName']) {
-				echo "sName@@".json_encode( (object)$up_value );
-			}
+				echo "online_s@@";
 			// Key 更新 : 某個 Question
-			elseif (serialize($ini_value[$qid]) !== serialize($up_value[$qid])) {
+			}elseif (serialize($ini_value[$qid]) !== serialize($up_value[$qid])) {
 				echo "question@@".json_encode( (object)$up_value );
 			}
 		}
-		echo '@@@'.$ini_value['sName'].$up_value['sName'];
 		break;
 
 	case 'updatesName':

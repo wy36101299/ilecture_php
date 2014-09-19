@@ -42,6 +42,8 @@ function bindRoom(tInfo){
 		success: function(msg){
 			msg = msg.split('@@');
 			console.log('bindRoom')
+			console.log(msg)
+			console.log(msg[0])
 			if( msg[0].trim() === 'mood' ){  // Key 更新 : Mood
 				setMoodInfo( $('#roomInfo nav'), JSON.parse( msg[1] ).mood );
 			}else if( msg[0].trim() === 'speed' ){  // Key 更新 : Speed
@@ -56,8 +58,10 @@ function bindRoom(tInfo){
 					setResult( JSON.stringify(JSON.parse( msg[1] )[qId]) );
 				}
 			}else if( msg[0].trim() === 'online_s' ){  // Key 更新 : online_s
+				console.log('online_s')
 				updateOnline_s();
 			}else if( msg[0].trim() === 'sName' ){  // Key 更新 : sName
+				console.log('sName')
 				getLog(JSON.parse(localStorage.tInfo));
 			}
 		},
