@@ -147,11 +147,13 @@ switch ($_POST['action']) {
 	case 'getallroomvalue':
 		$ary_room = array();
 
-		$query = sprintf( "SELECT value FROM `rooms`" );
-		$result = mysql_query($query) or die('error@取得ary_roomId錯誤。');
+		$query = sprintf( "SELECT value,key1 FROM `rooms`" );
+		$result = mysql_query($query) or die('error@取得ary_room錯誤。');
 		if( mysql_num_rows( $result ) > 0 ){    // 有資料
 			while( $a = mysql_fetch_array($result) ){
-				array_push($ary_room,$a['value']);
+				$ary = unserialize($a['value']);
+				$ary['roomId'] = $a['key1'];
+				array_push($ary_room,$ary);
 			}
 		}
 		echo 'success@@'.json_encode( (object)$ary_room );

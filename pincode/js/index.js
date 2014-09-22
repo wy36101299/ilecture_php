@@ -31,37 +31,26 @@ function checkPincode(pincode){
 		dataType: 'html',
 		success: function(msg){
 			msg = msg.split('@@');
-			var obj_room = JSON.parse( msg[1] );
-			for( var key in obj_room ){
-				if( obj_room.code === pincode ){ // 找到房間
-					window.location.href = '../student/index.html?room_id='+keysAry[i]+'&code='+pincode;
-					return 0;
-				}				
-			}      
+			var ary_room = JSON.parse( msg[1] );
+			if (ary_room !== null) {
+				for( var key in ary_room ){
+					console.log(ary_room[key])
+					if( ary_room[key].roomCode === pincode ){ // 找到房間
+						window.location.href = '../student/index.html?room_id='+ary_room[key].roomId+'&code='+pincode;
+						return 0;
+					}				
+				}      
+				alert('未找到符合 Pincode 的房間。');
+				bodyId.className = bodyId.className.replace('blur', '');				
+			}else{
+				alert('未有房間可以進入。');
+				bodyId.className = bodyId.className.replace('blur', '');
+			}
+
 		},
 		error:function(xhr, ajaxOptions, thrownError){ 
 			console.log(xhr.status); 
 			console.log(thrownError);
 		}
 	});		
-
-	roomsRef.once('value', function(data){
-		console.log(data.val());
-		var obj = data.val() || null;
-		if( data.val() !== null ){
-			var keysAry = Object.keys(obj);
-			for( var i=0, aryLen=keysAry.length; i<aryLen; i++ ){
-				console.log( keysAry[i]+' -> '+obj[keysAry[i]].code );
-				if( obj[keysAry[i]].code === pincode ){ // 找到房間
-					window.location.href = '../student/index.html?room_id='+keysAry[i]+'&code='+pincode;
-					return 0;
-				}
-			}
-			alert('未找到符合 Pincode 的房間。');
-			bodyId.className = bodyId.className.replace('blur', '');
-		}else{
-			alert('未有房間可以進入。');
-			bodyId.className = bodyId.className.replace('blur', '');
-		}
-	});
 }
