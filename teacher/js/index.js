@@ -3,13 +3,19 @@ $(function(){
 	initPieChart(getUrlVars()['room_id'], viewport.get());
 	
 	// 轉換 Student 網址成短網址並生成 QR-Code
-	getTinyURL('http://localhost/~wy/git_project/ilecture_php/student/index.html?room_id='+getUrlVars()['room_id']+'&code='+getUrlVars()['code'], getUrlVars()['code']);
+	getTinyURL('http://localhost/~wy/git_project/ilecture_php/student/index.html?room_id='+getUrlVars()['room_id']+'&code='+getUrlVars()['code'], getUrlVars()['code'], viewport.get());
+
 });
 
 
 $(window).resize( function(){
-	// 設定 EasyPieChart
-	//setPieChart($('#roomInfo nav'), viewport.get());
+	// resize : 設定 EasyPieChart
+	setPieChart($('#roomInfo nav'), viewport.get());
+	// resize : 設定 BarChart
+	setBarChart(document.getElementById('barCanvas'), viewport.get());
+	// resize : 設定 QR-Code
+	setQRCode($('#show-qrCode'), viewport.get());
+	$('#container').removeClass('link');
 });
 
 // 送出 Text
@@ -38,7 +44,7 @@ $(document).on('keypress', '#roomMessage > footer input', function(e){
 $(document).on('click', '#navigation div.item', function(){
 	if( !$(this).hasClass('active') ){
 		$(this).parent().parent().find('div.active').removeClass('active').end().find('[_nav='+$(this).attr('_nav')+']').addClass('active');
-		$(this).parents('#navigation').siblings('#container').children('section.active').removeClass('active').end().children('#'+$(this).attr('_nav')).addClass('active');
+		$('#container').children().children('section.active').removeClass('active').end().children('#'+$(this).attr('_nav')).addClass('active');
 		if( $(this).attr('_nav') === 'roomMessage' ){
 			// scrolling 滑到最下面
 			var $a = $('#'+$(this).attr('_nav')).children('div');
@@ -70,6 +76,16 @@ $(document).on('click', '#roomQues div.sel-item', function(){
 	if( !$(this).hasClass('active') ){
 		$(this).addClass('active').siblings().removeClass('active').parents('#roomQues').attr('_sel', $(this).attr('_sel'));
 	}
+});
+
+// 電腦版 : 打開「連線資訊」
+$(document).on('click', '#roomLink_btn', function(){
+	$('#container').addClass('link').animate({scrollTop: 0}, 100);
+});
+
+// 電腦版 : 離開「連線資訊」
+$(document).on('click', '#roomLink div.back', function(){
+	$('#container').removeClass('link');
 });
 
 // 顯示 & 初始化 : 新問題的「提問結果」
@@ -107,62 +123,110 @@ function analyzeResult(json_ques){
 	console.log(answerAry);
 	console.log(resultAry);
 	// 顯示投票的結果
-	drawBarChart(resultAry);
+	drawBarChart(resultAry, viewport.get());
 }
 
-// 設定 EasyPieChart
+// resize : 設定 EasyPieChart
 function setPieChart($pieChart, _){
-	/*if( _.w <= 980 ){
-		if( $pieChart.hasClass('desktop') ){
-			//$pieChart.data('easy-pie-chart', null);
-			var $chart = $pieChart.find('div.chart');
+	var $chart = $pieChart.find('div.chart-canvas');
+	if( _.w <= 980 ){
+		if( $chart.hasClass('desktop') ){
 			$chart.children('canvas').remove().end().data('easyPieChart', null);
-			$chart.easyPieChart({
-				lineWidth: 15,
-				size: 200,
-				barColor: 'rgb(21,161,134)',
-				trackColor: 'rgb(191,194,199)',
-				animate: 2000,
+			$chart.removeClass('desktop').addClass('mobile').easyPieChart({
+				lineWidth: 10,
+				size: 75,
+				barColor: 'rgb(241,196,15)',
+				trackColor: 'rgba(255,255,255,.2)',
+				animate: 1500,
 				scaleColor: !1,
 				lineCap: 'square'
 			});
-			$pieChart.removeClass('desktop').addClass('mobile');
 		}
 	}else{
-		if( $pieChart.hasClass('mobile') ){*
-			var $chart = $pieChart.find('div.chart');
+		if( $chart.hasClass('mobile') ){
 			$chart.children('canvas').remove().end().data('easyPieChart', null);
-			$chart.easyPieChart({
+			$chart.removeClass('mobile').addClass('desktop').easyPieChart({
 				lineWidth: 15,
-				size: 280,
-				barColor: 'rgb(21,161,134)',
-				trackColor: 'rgb(191,194,199)',
-				animate: 2000,
+				size: 104,
+				barColor: 'rgb(231,76,60)',
+				trackColor: 'rgba(231,76,60,.3)',
+				animate: 1500,
 				scaleColor: !1,
 				lineCap: 'square'
 			});
-			//$pieChart.removeClass('mobile').addClass('desktop');
-	/*	}
-	}*/
+		}
+	}
+}
+
+// resize : 設定 BarChart
+function setBarChart(barCanvas, _){
+	if( _.w <= 980 ){
+		if( $(barCanvas).hasClass('desktop') ){
+			drawBarChart(JSON.parse($(barCanvas).data('resultAry')), _);
+		}
+	}else{
+		if( $(barCanvas).hasClass('mobile') ){
+			drawBarChart(JSON.parse($(barCanvas).data('resultAry')), _);
+		}
+	}
+}
+
+// resize : 設定 QR-Code
+function setQRCode($showQRCode, _){
+	if( _.w <= 980 ){
+		if( $showQRCode.hasClass('desktop') ){
+			$showQRCode.html('');
+			var url = $showQRCode.data('url'),
+				colorDark = (_.w>980)?'rgb(119,107,94':'rgb(248, 227, 173)',
+				colorLight = (_.w>980)?'rgba(248,243,230,0)':'rgba(248,243,230,0)',
+				qrCode = new QRCode('show-qrCode', {
+					width: 280,
+					height: 280,
+					colorDark : colorDark,
+					colorLight : colorLight,
+					correctLevel : QRCode.CorrectLevel.H
+				});
+			qrCode.makeCode(url);
+			$showQRCode.removeClass('desktop').addClass('mobile');
+		}
+	}else{
+		if( $showQRCode.hasClass('mobile') ){
+			$showQRCode.html('');
+			var url = $showQRCode.data('url'),
+				colorDark = (_.w>980)?'rgb(119,107,94':'rgb(248, 227, 173)',
+				colorLight = (_.w>980)?'rgba(248,243,230,0)':'rgba(248,243,230,0)',
+				qrCode = new QRCode('show-qrCode', {
+					width: 280,
+					height: 280,
+					colorDark : colorDark,
+					colorLight : colorLight,
+					correctLevel : QRCode.CorrectLevel.H
+				});
+			qrCode.makeCode(url);
+			$showQRCode.removeClass('mobile').addClass('desktop');
+		}
+	}
 }
 
 // 新增 Message
 function addMessages(tInfo, tLog){
 	var sId = Object.keys(tLog[0])[0], $a = $('#show-message');
 	if( $a.children('div.item:last-child').find('span.timestamp').text() ){ // 若 Messages 不為空
+		console.log( compareDateTime($a.children('div.item:last-child').find('span.timestamp').text(), tLog[0][sId].split('_')[1]) );
 		if( !compareDateTime($a.children('div.item:last-child').find('span.timestamp').text(), tLog[0][sId].split('_')[1]) ){ // 若 new message 沒比較新，則不動作
+			console.log('addMessages 不動作');
 			return 0;
 		}
 	}
 	if( tLog[0][sId].split('_')[0] === 'mood' ){
-		$a.children('div.item.mood[_sid='+sId+']').remove().end().append(getMessagesHtml('Mood', tLog[0][sId].substr(25), tLog[0][sId].split('_')[1], sId));
+		$a.children('div.item.mood[_sid='+sId+'], div.null').remove().end().append(getMessagesHtml('Mood', tLog[0][sId].substr(25), tLog[0][sId].split('_')[1], sId));
 	}else if( tLog[0][sId].split('_')[0] === 'speed' ){
-		$a.children('div.item.speed[_sid='+sId+']').remove().end().append(getMessagesHtml('Speed', tLog[0][sId].substr(26), tLog[0][sId].split('_')[1], sId));
+		$a.children('div.item.speed[_sid='+sId+'], div.null').remove().end().append(getMessagesHtml('Speed', tLog[0][sId].substr(26), tLog[0][sId].split('_')[1], sId));
 	}else if( tLog[0][sId].split('_')[0] === 'text' ){
-		$a.append(getMessagesHtml('Text', tLog[0][sId].substr(25), tLog[0][sId].split('_')[1], sId));
+		$a.children('div.null').remove().end().append(getMessagesHtml('Text', tLog[0][sId].substr(25), tLog[0][sId].split('_')[1], sId));
 	}
 	// scrolling 滑到最下面
-	var $b = $('#roomMessage').children('div');
+	var $b = $('#roomMessage').children('section');
 	$b.animate({scrollTop: $b.prop('scrollHeight')}, 500);
 }
 
@@ -191,6 +255,7 @@ function compareDateTime(a, b){
 // Messages : 顯示資訊(剛載入網頁時)
 function showLogs(tLog, tInfo){
 	var html = '';
+	aa = tLog;
 	for( var i=0, aryLen = tLog.length; i<aryLen; i++ ){
 		var sId = Object.keys(tLog[i])[0];
 		if( tLog[i][sId].split('_')[0] === 'mood' ){
@@ -203,7 +268,7 @@ function showLogs(tLog, tInfo){
 	}
 	$('#show-message').html(html);
 	// scrolling 滑到最下面
-	var $a = $('#roomMessage').children('div');
+	var $a = $('#roomMessage').children('section');
 	$a.animate({scrollTop: $a.prop('scrollHeight')}, 500);
 }
 
@@ -237,17 +302,25 @@ function getMessagesHtml(mode, val, time, sId){
 }
 
 // 投票結果 : 畫出長條圖
-function drawBarChart(resultAry){
-	var barChartData = {
+function drawBarChart(resultAry, _){
+	var mode = (_.w>980)?'desktop':'mobile',
+	barCanvas = document.getElementById('barCanvas'),
+	ctx = barCanvas.getContext('2d'),
+	fillColor = (_.w>980)?'rgba(231,76,60,.9)':'rgba(142,68,173,.9)',
+	strokeColor = (_.w>980)?'rgba(231,76,60,.8)':'rgba(142,68,173,.8)',
+	barChartData = {
 		labels : [],
 		datasets : [{
-			fillColor : "rgba(142,68,173,.9)",
-			strokeColor : "rgba(142,68,173,.8)",
-			highlightFill : "rgba(119,107,94,.75)",
-			highlightStroke : "rgba(119,107,94,1)",
+			fillColor : fillColor,
+			strokeColor : strokeColor,
+			highlightFill : 'rgba(119,107,94,.75)',
+			highlightStroke : 'rgba(119,107,94,1)',
 			data : []
 		}]
-	}, ctx = document.getElementById('barCanvas').getContext('2d');
+	};
+	ctx.canvas.height = 240;
+	ctx.canvas.width = 240;
+	$(barCanvas).removeClass('desktop mobile').addClass(mode).data('resultAry', JSON.stringify(resultAry));
 
 	// barChartData : 長條圖的資料陣列
 	for( var i=0, iLen=resultAry.length; i<iLen; i++ ){
@@ -263,20 +336,24 @@ function drawBarChart(resultAry){
 }
 
 // 轉換 Student 網址成短網址並生成 QR-Code
-function getTinyURL(url, roomCode){
+function getTinyURL(url, roomCode, _){
 	$.urlShortener.settings.apiKey = 'AIzaSyDhbUJhg1z_4y1WZiRxu-xqXhU8EsVOj6E';
 	$.urlShortener({
 		longUrl: url,
 		success: function(shortUrl){
-			var qrCode = new QRCode('show-qrCode', {
-				width: 280,
-				height: 280,
-				colorDark : 'rgb(100,88,76)',
-				colorLight : 'rgba(248,243,230,0)',
-				correctLevel : QRCode.CorrectLevel.H
-			});
+			var mode = (_.w>980)?'desktop':'mobile',
+				colorDark = (_.w>980)?'rgb(119,107,94':'rgb(248, 227, 173)',
+				colorLight = (_.w>980)?'rgba(248,243,230,0)':'rgba(248,243,230,0)',
+				qrCode = new QRCode('show-qrCode', {
+					width: 280,
+					height: 280,
+					colorDark : colorDark,
+					colorLight : colorLight,
+					correctLevel : QRCode.CorrectLevel.H
+				});
 			// 利用回傳的短網址生成 QR-Code 並顯示在「連線資訊」上
 			qrCode.makeCode(url);
+			$('#show-qrCode').addClass(mode).data('url', url);
 			$('#show-roomCode').text(roomCode);
 			$('#show-roomLink').children().text(shortUrl).attr('href', url);
 		},

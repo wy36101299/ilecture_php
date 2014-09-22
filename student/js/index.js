@@ -9,11 +9,16 @@ $(function(){
 	});
 });
 
+$(window).resize( function(){
+	// resize : 設定 BarChart
+	setBarChart(document.getElementById('barCanvas'), viewport.get());
+});
+
 // 點擊 Navigation
 $(document).on('click', '#navigation div.item', function(){
 	if( !$(this).hasClass('active') ){
 		$(this).parent().parent().find('div.active').removeClass('active').end().find('[_nav='+$(this).attr('_nav')+']').addClass('active');
-		$('#container').children('section.active').removeClass('active').end().children('#'+$(this).attr('_nav')).addClass('active');
+		$('#container').children().children('section.active').removeClass('active').end().children('#'+$(this).attr('_nav')).addClass('active');
 		if( $(this).attr('_nav') === 'roomMessage' ){
 			// scrolling 滑到最下面
 			var $a = $('#'+$(this).attr('_nav')).children('section');
@@ -32,7 +37,7 @@ $(document).on('click', '#text_btn', function(){
 			alert('訊息：含有未認可的標點符號。');
 		}
 	}else{
-		alert('未填寫問題。');
+		alert('未填寫訊息。');
 	}
 });
 
@@ -64,18 +69,24 @@ $(document).on('click', '#roomMessage > footer', function(e){
 	var a = $(e.target).parent().attr('class') || '';
 	if( a.indexOf('user') !== -1 ){  // User ID : Toogle
 		if( a.indexOf('active') !== -1 ){  // close User ID
-			$(e.target).parent().removeClass('active').parent().siblings('nav.user, div.overlay').removeClass('active').siblings('footer').attr('_now', 'none');
+			$(e.target).parent().removeClass('active').parent().siblings('nav.user, div.overlay').removeClass('active').siblings('section').removeClass('active user').siblings('footer').attr('_now', 'none');
 		}else{  // open User ID
-			$(e.target).parent().addClass('active').siblings('div').removeClass('active').parent().siblings('nav.posting').removeClass('active').siblings('nav.user, div.overlay').addClass('active').siblings('footer').attr('_now', 'user');
+			$(e.target).parent().addClass('active').siblings('div').removeClass('active').parent().siblings('nav.posting').removeClass('active').siblings('nav.user, div.overlay').addClass('active').siblings('section').removeClass('active posting').addClass('active user').siblings('footer').attr('_now', 'user');
 		}
+		// scrolling 滑到最下面
+		var $Message = $('#roomMessage').children('section');
+		$Message.animate({scrollTop: $Message.prop('scrollHeight')}, 200);
 	}else if( a.indexOf('posting') !== -1 ){  // Posting : Toogle
 		if( a.indexOf('active') !== -1 ){  // close Posting
-			$(e.target).parent().removeClass('active').parent().siblings('nav.posting, div.overlay').removeClass('active').siblings('footer').attr('_now', 'none');
+			$(e.target).parent().removeClass('active').parent().siblings('nav.posting, div.overlay').removeClass('active').siblings('section').removeClass('active posting').siblings('footer').attr('_now', 'none');
 		}else{  // open Posting
-			$(e.target).parent().addClass('active').siblings('div').removeClass('active').parent().siblings('nav.user').removeClass('active').siblings('nav.posting, div.overlay').addClass('active').siblings('footer').attr('_now', 'posting');
+			$(e.target).parent().addClass('active').siblings('div').removeClass('active').parent().siblings('nav.user').removeClass('active').siblings('nav.posting, div.overlay').addClass('active').siblings('section').removeClass('active user').addClass('active posting').siblings('footer').attr('_now', 'posting');
 		}
+		// scrolling 滑到最下面
+		var $Message = $('#roomMessage').children('section');
+		$Message.animate({scrollTop: $Message.prop('scrollHeight')}, 200);
 	}else{
-		$(e.target).parent().siblings('div.active').removeClass('active').parent().siblings('.active').removeClass('active').siblings('footer').attr('_now', 'none');
+		$(e.target).parent().siblings('div.active').removeClass('active').parent().siblings('.active').removeClass('active').siblings('section').removeClass('posting user').siblings('footer').attr('_now', 'none');
 	}
 });
 
@@ -146,16 +157,16 @@ $(document).on('keypress', '#roomMessage > nav.user div.wrapper-left > input', f
 });
 
 // 新增 Message
-function addMessage(mode, e, val, time, sId){
+function addMessages(mode, e, val, time, sId){
 	if( mode === 'Mood' ){
-		$('#show-message').children('div.item.mood').remove().end().append(getMessagesHtml('Mood', val, time, sId));
+		$('#show-message').children('div.item.mood, div.null').remove().end().append(getMessagesHtml('Mood', val, time, sId));
 		$(e).parents('nav.posting').removeClass('active').siblings('.active').removeClass('active').end().siblings('footer').attr('_now', 'none').children('div').removeClass('active');
 	}else if( mode === 'Speed' ){
-		$('#show-message').children('div.item.speed').remove().end().append(getMessagesHtml('Speed', val, time, sId));
+		$('#show-message').children('div.item.speed, div.null').remove().end().append(getMessagesHtml('Speed', val, time, sId));
 		$(e).parents('nav.posting').removeClass('active').siblings('.active').removeClass('active').end().siblings('footer').attr('_now', 'none').children('div').removeClass('active');
 	}else if( mode === 'Text' ){
 		$(e).siblings('div.input').children().val('');
-		$('#show-message').append(getMessagesHtml('Text', val, time, sId));
+		$('#show-message').children('div.null').remove().end().append(getMessagesHtml('Text', val, time, sId));
 	}
 	// scrolling 滑到最下面
 	var $a = $('#roomMessage').children('section');
@@ -185,7 +196,6 @@ function showLogs(sLog, sInfo){
 
 // 顯示 : 選擇問題答案介面
 function setQuestion(json_ques){
-	console.log(json_ques)
 	var o_ques = JSON.parse(json_ques), type = ( o_ques.type === 'single' ) ? '單選' : '多選', title = ( o_ques.title === '' ) ? '未設定問題描述' : o_ques.title;
 	console.log(o_ques.s);
 	console.log(checkArrayByIndex(o_ques.s, JSON.parse(localStorage.sInfo).sId));
@@ -225,18 +235,39 @@ function getMessagesHtml(mode, val, time, sId){
 	return html;
 }
 
+// resize : 設定 BarChart
+function setBarChart(barCanvas, _){
+	if( _.w <= 980 ){
+		if( $(barCanvas).hasClass('desktop') ){
+			drawBarChart(JSON.parse($(barCanvas).data('resultAry')), _);
+		}
+	}else{
+		if( $(barCanvas).hasClass('mobile') ){
+			drawBarChart(JSON.parse($(barCanvas).data('resultAry')), _);
+		}
+	}
+}
+
 // 投票結果 : 畫出長條圖
-function drawBarChart(resultAry){
-	var barChartData = {
+function drawBarChart(resultAry, _){	
+	var mode = (_.w>980)?'desktop':'mobile',
+	barCanvas = document.getElementById('barCanvas'),
+	ctx = barCanvas.getContext('2d'),
+	fillColor = (_.w>980)?'rgba(231,76,60,.9)':'rgba(142,68,173,.9)',
+	strokeColor = (_.w>980)?'rgba(231,76,60,.8)':'rgba(142,68,173,.8)',
+	barChartData = {
 		labels : [],
 		datasets : [{
-			fillColor : "rgba(142,68,173,.9)",
-			strokeColor : "rgba(142,68,173,.8)",
-			highlightFill : "rgba(119,107,94,.75)",
-			highlightStroke : "rgba(119,107,94,1)",
+			fillColor : fillColor,
+			strokeColor : strokeColor,
+			highlightFill : 'rgba(119,107,94,.75)',
+			highlightStroke : 'rgba(119,107,94,1)',
 			data : []
 		}]
-	}, ctx = document.getElementById('barCanvas').getContext('2d');
+	};
+	ctx.canvas.height = 240;
+	ctx.canvas.width = 240;
+	$(barCanvas).removeClass('desktop mobile').addClass(mode).data('resultAry', JSON.stringify(resultAry));
 
 	// barChartData : 長條圖的資料陣列
 	for( var i=0, iLen=resultAry.length; i<iLen; i++ ){
@@ -287,7 +318,7 @@ function analyzeResult(json_ques){
 	console.log(answerAry);
 	console.log(resultAry);
 	// 顯示投票的結果
-	drawBarChart(resultAry);
+	drawBarChart(resultAry, viewport.get());
 }
 
 // 取得該選項相對應的英文編號

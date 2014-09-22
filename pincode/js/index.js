@@ -1,4 +1,3 @@
-var myRootRef = new Firebase('https://ilecture.firebaseio.com/');
 
 // PinCode 自動 focus
 function moveOnMax(e, next){
@@ -23,8 +22,29 @@ function getPincode(){
 // 檢查 : Student 輸入的 Pincode
 function checkPincode(pincode){
 	console.log(pincode);
-	var roomsRef = myRootRef.child('rooms'), bodyId = document.getElementById('body');
+	bodyId = document.getElementById('body');
 	bodyId.className = bodyId.className.replace('', 'blur');
+	$.ajax({  
+		url: '../php/index.php',
+		data:{'action': 'getallroomvalue'},
+		type: 'POST',
+		dataType: 'html',
+		success: function(msg){
+			msg = msg.split('@@');
+			var obj_room = JSON.parse( msg[1] );
+			for( var key in obj_room ){
+				if( obj_room.code === pincode ){ // 找到房間
+					window.location.href = '../student/index.html?room_id='+keysAry[i]+'&code='+pincode;
+					return 0;
+				}				
+			}      
+		},
+		error:function(xhr, ajaxOptions, thrownError){ 
+			console.log(xhr.status); 
+			console.log(thrownError);
+		}
+	});		
+
 	roomsRef.once('value', function(data){
 		console.log(data.val());
 		var obj = data.val() || null;

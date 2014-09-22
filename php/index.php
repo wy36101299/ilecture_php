@@ -143,5 +143,18 @@ switch ($_POST['action']) {
 		// $result is decide Synchronization success or failed
 		echo 'success@@'.$result;
 		break;
+
+	case 'getallroomvalue':
+		$ary_room = array();
+
+		$query = sprintf( "SELECT value FROM `rooms`" );
+		$result = mysql_query($query) or die('error@取得ary_roomId錯誤。');
+		if( mysql_num_rows( $result ) > 0 ){    // 有資料
+			while( $a = mysql_fetch_array($result) ){
+				array_push($ary_room,$a['value']);
+			}
+		}
+		echo 'success@@'.json_encode( (object)$ary_room );
+		break;
 	}
 ?>

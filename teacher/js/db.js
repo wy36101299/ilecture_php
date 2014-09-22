@@ -51,7 +51,7 @@ function bindRoom(tInfo){
 			}else if( msg[0].trim() === 'messages' ){ // Key 更新 : Messages
 				addMessages( tInfo, JSON.parse( msg[1] ).messages );
 			}else if( msg[0].trim() === 'question' ){  // Key 更新 : 某個 Question
-				var tInfo = JSON.parse(localStorage.tInfo), qId = tInfo.qAry[0];
+				var tInfo = JSON.parse(localStorage.tInfo), qId = tInfo.question;
 				if( JSON.parse( msg[1] ).question === qId ){  // 取得投票的結果
 					console.log( JSON.parse( msg[1] )[qId] );
 					localStorage.setItem('tlatestQuesInfo', JSON.parse( msg[1] )[qId] );
@@ -151,7 +151,7 @@ function getLatestQuestion(tInfo){
 		success: function(msg){
 			msg = msg.split('@@');
 			if( JSON.parse( msg[1] ).question !== null ){ // 這間 room -> 曾經發問過問題
-					qId = tInfo.qAry[0];
+					qId = tInfo.question;
 					localStorage.setItem('tlatestQuesInfo', JSON.parse( msg[1] )[qId]);
 					setResult( JSON.stringify(JSON.parse( msg[1] )[qId]) );
 					$('#roomResult').removeClass('null');
@@ -248,7 +248,7 @@ function createQuestion(e, title, tInfo, num){
 		s : [],
 		answer : []
 	}, qId = 'q_'+timestamp.get().num;
-	tInfo.qAry.unshift( qId );
+	tInfo.question = qId;
 	console.log(o_ques.answer);
 	json_ques = JSON.stringify(o_ques);
 	$.ajax({  

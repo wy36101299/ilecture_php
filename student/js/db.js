@@ -84,7 +84,7 @@ function bindRoom(sInfo){
 						setResult(JSON.stringify(JSON.parse( msg[1] )[qId]));
 						// 顯示 #roomQues 頁面
 						$('#navigation').find('div.item.active').removeClass('active').end().find('[_nav=roomQues]').addClass('active');
-						$('#container').children('section.active').removeClass('active').end().children('#roomQues').addClass('active');
+						$('#container').children().children('section.active').removeClass('active').end().children('#roomQues').addClass('active');
 					},
 					error:function(xhr, ajaxOptions, thrownError){ 
 						console.log(xhr.status); 
@@ -95,7 +95,6 @@ function bindRoom(sInfo){
 			// Key 更新 : 某個 Question
 			console.log(qId)
 			if (qId !== null) {
-				console.log('123')
 				var o_ques = JSON.parse( msg[1] )[qId];
 				var localO_ques = localStorage.getItem('slatestQuesInfo')
 				console.log(o_ques)
@@ -122,6 +121,24 @@ function updateState(sInfo){
 		dataType: 'html',
 		success: function(msg){
 			msg = msg.split('@@');
+
+			var _GET = getUrlVars(),
+			roomId = _GET['room_id'] || null,
+			roomCode = _GET['code'] || null,
+			sInfo = JSON.parse(localStorage.sInfo) || null,
+			num = 0;
+			if( roomId === null || roomCode === null ){
+				alert('參數缺失。');
+				localStorage.removeItem('sInfo');
+				localStorage.removeItem('slatestQuesInfo');
+				window.location.replace('../error/index.html');
+				return 0;
+			}
+			if( sInfo.roomCode !== roomCode || sInfo.roomId !== roomId ){
+				alert('一個瀏覽器，只能夠同時使用一間教室。');
+				window.location.replace('../error/index.html');
+				return 0;
+			}
 			var ary = JSON.parse( msg[1] ).online_s || null, o_state = {}, count = -1;
 			o_state[sInfo['sId']] = timestamp.get().num;
 			if( ary !== null ){
@@ -231,7 +248,7 @@ function sendMood(e, sInfo){
 											$('body').removeClass('blur');
 										}else{
 											$('body').removeClass('blur');
-											addMessage('Mood', e, nowScores, time, sInfo['sId']);
+											addMessages('Mood', e, nowScores, time, sInfo['sId']);
 										}
 									},
 									error:function(xhr, ajaxOptions, thrownError){ 
@@ -336,7 +353,7 @@ function sendSpeed(e, sInfo){
 											console.log(e)
 											console.log(nowScores)
 											console.log(time)
-											addMessage('Speed', e, nowScores, time, sInfo['sId']);
+											addMessages('Speed', e, nowScores, time, sInfo['sId']);
 										}
 									},
 									error:function(xhr, ajaxOptions, thrownError){ 
@@ -365,31 +382,6 @@ function sendSpeed(e, sInfo){
 	});	
 }
 
-// 送出 Text
-function sendText(e, sInfo, text){
-	$('body').addClass('blur');
-	var messagesRef = myRootRef.child('rooms').child(sInfo['roomId']).child('messages');
-	messagesRef.once('value', function( data ){
-		var ary = JSON.parse(data.val()) || null, o_send = {}, time = timestamp.get().read;
-		o_send[sInfo['sId']] = 'text_'+time+'_'+text;
-		if( ary === null ){
-			ary = [];
-			ary.push(o_send);
-		}else{
-			ary.unshift(o_send);
-		}
-		console.log(ary);
-		messagesRef.set(JSON.stringify(ary), function(error){
-			if(error){
-				alert('Synchronization failed');
-				$('body').removeClass('blur');
-			}else{
-				$('body').removeClass('blur');
-				addMessage('Text', e, text, time, sInfo['sId']);
-			}
-		});
-	});
-}
 // 送出 Text
 function sendText(e, sInfo, text){
 	$('body').addClass('blur');	
@@ -421,7 +413,7 @@ function sendText(e, sInfo, text){
 						$('body').removeClass('blur');
 					}else{
 						$('body').removeClass('blur');
-						addMessage('Text', e, text, time, sInfo['sId']);						
+						addMessages('Text', e, text, time, sInfo['sId']);						
 					}
 				},
 				error:function(xhr, ajaxOptions, thrownError){ 
@@ -446,15 +438,15 @@ function getLog(sInfo){
 		success: function(msg){
 			msg = msg.split('@@');
 			var ary = JSON.parse( msg[1] ).messages || null, sLog = [];
-			if( ary !== null ){
+			if( ary !== null && ary.length > 0 ){
 				for( var i=0, aryLen = ary.length; i<aryLen; i++ ){
 					if( sInfo['sId'] in ary[i] || 'teacher' in ary[i] ){
 						sLog.unshift(ary[i]);
 					}
 				}
+				console.log(sLog);
+				showLogs(sLog, sInfo);
 			}
-			console.log(sLog);
-			showLogs(sLog, sInfo);
 			initIsCompleted();
 		},
 		error:function(xhr, ajaxOptions, thrownError){ 
@@ -590,7 +582,7 @@ function sentStudentName(name, sInfo){
 								// 抓取最新問題的資訊
 								var ary = o_ques || null, sAry = ary.s, tempAry2 = [];
 								console.log(ary);
-								if( sAry.length !== 0 ){ // 這位 Student -> 曾經回答過問題
+								if( sAry.length !== 0 ){ // Student -> 曾經回答過問題
 									for( var i=0, aryLen=sAry.length; i<aryLen; i++ ){
 										if( sAry[i].split('-')[0] === oldId.split('-')[0] ){
 											tempAry2[i] = newId;
@@ -631,6 +623,20 @@ function sentStudentName(name, sInfo){
 											console.log(thrownError);
 										}
 									});
+								}else{
+									sInfo.sId = newId;
+									localStorage.setItem('sInfo', JSON.stringify(sInfo));
+									// 清除 updateState TimeOut 計數
+									clearTimeout(timeVar);
+									// 更新 online_s 的 sId
+									updateState(sInfo);
+									// 更新 Messages
+									getLog(JSON.parse(localStorage.sInfo));
+									$('#show-sId').text('No.'+newId.split('_')[1]);
+									$('body').removeClass('blur');
+									// 更新 sName，讓 Teacher 得知該學生有更新 Name
+									$.post( '../php/teacher_db.php', {'action': 'updatesName','roomId':sInfo['roomId'],'updateTime':timestamp.get().num} );																				
+									$('#show-sId').parent('nav.user').removeClass('active').siblings('.active').removeClass('active').end().siblings('footer').attr('_now', 'none').children('div').removeClass('active');									
 								}										
 							}else{ // 這間 room -> 從未發問過問題
 								sInfo.sId = newId;
@@ -685,6 +691,7 @@ function getLatestQuestion(sInfo){
 		dataType: 'html',
 		success: function(msg){
 			msg = msg.split('@@');
+			var sInfo = JSON.parse(localStorage.sInfo);
 			sInfo.question = JSON.parse( msg[1] ).question;
 			localStorage.setItem('sInfo', JSON.stringify(sInfo));
 			if( JSON.parse( msg[1] ).question !== null ){ // 這間 room -> 曾經發問過問題
